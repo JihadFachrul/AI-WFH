@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: awos_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: awos
+      POSTGRES_PASSWORD: awos
+      POSTGRES_DB: awos
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    container_name: awos_redis
+    restart: always
+    ports:
+      - "6379:6379"
