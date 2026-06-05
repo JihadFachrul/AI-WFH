@@ -1,644 +1,680 @@
 # CLAUDE.md — AI Workforce Operating System (AWOS)
 
-> **WAJIB DIBACA SEBELUM MENGERJAKAN APAPUN.**
-> Dokumen ini adalah source-of-truth untuk seluruh pengembangan AWOS. Ikuti semua konvensi, arsitektur, dan keputusan desain yang tertulis di sini. Jangan berasumsi atau berimprovisasi tanpa referensi dari dokumen ini.
+> ⚠️ WAJIB DIBACA PENUH SEBELUM MENGERJAKAN APAPUN.
+> Dokumen ini adalah **Source of Truth** utama. Jika ada konflik antara dokumen ini
+> dengan dokumen lain, dokumen ini yang berlaku KECUALI docs/AGENT_RULES.md
+> yang bersifat lebih spesifik dan selalu override dokumen ini.
 
 ---
 
-## 1. RINGKASAN PROYEK
+## 0. LANGKAH PERTAMA — WAJIB SEBELUM MENULIS SATU BARIS KODE
 
-**Nama Proyek:** AI Workforce Operating System (AWOS)
-**Tipe:** Platform enterprise internal berbasis AI
-**Tujuan:** Membantu perusahaan mengelola WFH, hybrid working, dan distributed team secara efektif, realtime, terukur, dan terotomatisasi.
+```bash
+# Step 1 — Baca semua dokumentasi Source of Truth secara berurutan
+cat docs/PRODUCT_VISION.md
+cat docs/AI_ARCHITECTURE.md
+cat docs/ROADMAP.md
+cat docs/AGENT_RULES.md
 
-### Yang AWOS BUKAN:
-- ❌ Bukan employee surveillance system
-- ❌ Bukan screenshot/mouse/webcam tracker
-- ❌ Bukan spyware atau activity monitor invasif
+# Step 2 — Audit kondisi aktual codebase
+find apps/api/src -type f -name "*.ts" | sort
+find apps/web/app -type f | sort
+find apps/web/components -type f | sort
+cat apps/api/prisma/schema.prisma
 
-### Yang AWOS ADALAH:
-- ✅ Centralized operational workspace
-- ✅ Task & KPI management platform
-- ✅ AI-powered productivity augmentation
-- ✅ Workflow automation engine
-- ✅ Knowledge management system dengan RAG
+# Step 3 — Cek package yang terinstall (jangan asumsi versi)
+cat apps/api/package.json
+cat apps/web/package.json
+
+# Step 4 — Baru kerjakan task
+```
+
+> ❌ DILARANG membuat, mengedit, atau menghapus file apapun sebelum Step 1–3 selesai.
+> ❌ DILARANG mengasumsikan isi file yang belum dibaca.
+> ❌ DILARANG mengasumsikan versi library dari memori training.
 
 ---
 
-## 2. ARSITEKTUR SISTEM
+## 1. DOCUMENTATION HIERARCHY
+
+Baca dokumen berikut secara berurutan. Semua bersifat **mandatory**:
+
+| Urutan | File | Isi |
+|--------|------|-----|
+| 1 | `docs/PRODUCT_VISION.md` | Visi produk, target user, business value |
+| 2 | `docs/AI_ARCHITECTURE.md` | Arsitektur AI, data dependency, AI roadmap |
+| 3 | `docs/ROADMAP.md` | Phase-by-phase roadmap, scope tiap phase |
+| 4 | `docs/AGENT_RULES.md` | Aturan operasional agent, anti-pattern |
+| 5 | `CLAUDE.md` (ini) | Technical reference, konvensi, state codebase |
+
+**Jika ada konflik antar dokumen:**
+- `docs/AGENT_RULES.md` → priority tertinggi
+- `docs/ROADMAP.md` → tentukan KAPAN sesuatu dibangun
+- `docs/PRODUCT_VISION.md` → tentukan MENGAPA sesuatu dibangun
+- `CLAUDE.md` → tentukan BAGAIMANA sesuatu dibangun
+
+---
+
+# CURRENT IMPLEMENTATION STATUS
+
+Dokumen ini HARUS mencerminkan kondisi codebase aktual.
+
+Jika dokumentasi tidak sesuai dengan codebase:
+
+CODEBASE adalah sumber kebenaran utama.
+
+Agent WAJIB memverifikasi implementasi aktual sebelum mengubah modul.
+
+---
+
+## Backend Completed
+
+✅ Authentication Foundation
+
+- Register
+- Login
+- Me
+- JWT Access Token
+
+✅ User Management
+
+- User CRUD
+- Role Assignment
+- User Activation / Deactivation
+
+✅ Department Management
+
+- Department CRUD
+
+✅ Role Foundation
+
+- SUPER_ADMIN
+- ADMIN
+- MANAGER
+- EMPLOYEE
+
+✅ Task Management
+
+- Task CRUD
+- Assignment
+- Ownership
+- Search
+- Filter
+- Pagination
+
+✅ Task Comments
+
+- Task Comment CRUD
+
+✅ Notification Foundation
+
+- Notification CRUD
+- Unread Counter
+- Mark As Read
+- Mark All As Read
+
+✅ Realtime Foundation
+
+- Socket.IO
+- notification:new
+- task:assigned
+- task:updated
+- task:comment
+
+---
+
+## Frontend Completed
+
+✅ Login Page
+
+✅ Dashboard
+
+✅ Task Management UI
+
+✅ Notification Center UI
+
+✅ User Management UI
+
+✅ Department Management UI
+
+---
+
+## Current Active Development
+
+🚧 Work Evidence System
+
+---
+
+## Locked Modules
+
+🔒 Daily Work Log
+
+🔒 Manager Review
+
+🔒 Workforce Session Tracking
+
+🔒 KPI Engine
+
+🔒 AI Evaluation
+
+🔒 Manager Copilot
+
+🔒 AI Workforce Intelligence
+
+## 2. PRODUCT IDENTITY
+
+### AWOS bukan:
+- ❌ Task management app biasa
+- ❌ Jira / Trello / Asana clone
+- ❌ Employee surveillance system
+- ❌ Screenshot / mouse / webcam tracker
+- ❌ ChatGPT wrapper / general-purpose chatbot
+
+### AWOS adalah:
+> **AI Workforce Operating System** — platform yang membantu organisasi bertransisi dari Work From Office ke Work From Anywhere tanpa kehilangan productivity, accountability, transparency, dan performance measurement.
+
+### Core Value Chain AWOS:
+```
+Task → Evidence → Work Log → Manager Review → KPI Engine → AI Workforce Intelligence
+```
+
+> Setiap fitur yang diusulkan harus berkontribusi pada rantai di atas.
+> Jika tidak, fitur tersebut harus dievaluasi ulang sebelum diprioritaskan.
+
+### Fokus Utama (bukan surveillance):
+- ✅ Task Completion & Output
+- ✅ Work Evidence
+- ✅ Progress Visibility
+- ✅ Manager Review
+- ✅ KPI Automation
+- ✅ Workforce Intelligence
+
+---
+
+## 3. ANTI-HALLUCINATION RULES
+
+### Sebelum mengusulkan fitur baru, jawab semua pertanyaan ini:
+1. Apakah fitur ini ada di `docs/ROADMAP.md` pada phase yang sedang aktif?
+2. Apakah data dependency fitur ini sudah tersedia?
+3. Apakah fitur ini berkontribusi pada Core Value Chain AWOS?
+
+Jika **lebih dari satu jawaban NO** → jangan implementasi, laporkan ke user terlebih dahulu.
+
+### STOP dan tanya user jika:
+- File yang akan diedit tidak ada di hasil `find` sebelumnya
+- Instruksi dari user bertentangan dengan `docs/ROADMAP.md` atau `docs/AGENT_RULES.md`
+- Diminta membangun modul yang statusnya `🔒 LOCKED`
+- Diminta menginstall library baru yang tidak ada di tech stack
+- Ada ambiguitas antara dua pendekatan yang sama-sama valid
+
+### Jangan pernah:
+- Mengarang nama field Prisma — selalu baca `schema.prisma` terlebih dahulu
+- Mengarang endpoint — selalu verifikasi dari dokumen ini atau kode yang ada
+- Mengarang versi library — selalu baca dari `package.json`
+- Mengasumsikan sebuah file ada tanpa verifikasi via `find` atau `cat`
+- Melanjutkan implementasi jika ada konflik yang belum terselesaikan
+
+---
+
+## 4. CURRENT PHASE & ACTIVE SCOPE
+
+> **Baca `docs/ROADMAP.md` untuk detail lengkap setiap phase.**
+> Bagian ini hanya ringkasan cepat untuk referensi agent.
+
+### Phase yang sedang aktif:
+**Phase 5 — Work Evidence & Performance Foundation**
+
+### Modul aktif di Phase 5:
+1. Work Evidence System
+2. Daily Work Log System
+3. Manager Review System
+4. Workforce Session Tracking
+5. KPI Engine
+
+### Aturan phase:
+- ❌ DILARANG mengerjakan modul di luar scope phase aktif
+- ❌ DILARANG memulai Phase 6+ sebelum semua item Phase 5 selesai
+- ✅ Boleh memperbaiki bug atau refactor modul dari phase sebelumnya
+- ✅ Boleh menambah test coverage modul yang sudah selesai
+
+---
+
+## 5. COMPLETED MODULES — STATUS LOCKED 🔒
+
+> Modul berikut sudah selesai diimplementasi. **JANGAN diubah tanpa instruksi eksplisit.**
+> Sebelum menyentuh modul ini, baca seluruh file yang ada terlebih dahulu.
+
+### ✅ Database Foundation — LOCKED
+- Prisma schema telah didefinisikan
+- Migration telah dijalankan
+- **Wajib baca:** `apps/api/prisma/schema.prisma` sebelum membuat model baru
+- Untuk menambah model baru: tambah ke schema → jalankan migration → generate client
+
+### ✅ Authentication Foundation — LOCKED
+- **Files:**
+  - `apps/api/src/modules/auth/auth.module.ts`
+  - `apps/api/src/modules/auth/auth.controller.ts`
+  - `apps/api/src/modules/auth/auth.service.ts`
+  - `apps/api/src/modules/auth/strategies/jwt.strategy.ts`
+  - `apps/api/src/modules/auth/strategies/jwt-refresh.strategy.ts`
+  - `apps/api/src/modules/auth/guards/jwt-auth.guard.ts`
+- **Endpoints live:** `POST /auth/login`, `POST /auth/register`, `POST /auth/logout`, `POST /auth/refresh`, `GET /auth/me`
+- **Token:** JWT Access (15m) + Refresh Token (7d, httpOnly cookie)
+- **Hashing:** bcrypt
+- ❌ JANGAN buat auth logic baru di luar module ini
+
+### ✅ User Management — LOCKED
+- **Files:**
+  - `apps/api/src/modules/users/users.module.ts`
+  - `apps/api/src/modules/users/users.controller.ts`
+  - `apps/api/src/modules/users/users.service.ts`
+- **Capabilities:** CRUD user, profile update, user listing dengan filter
+- ❌ JANGAN duplikasi user query di module lain — import `UsersService`
+
+### ✅ Role Foundation — LOCKED
+- Roles yang tersedia: `SUPER_ADMIN`, `ADMIN`, `MANAGER`, `EMPLOYEE`
+- RBAC via `RolesGuard` + `@Roles()` decorator
+- **Wajib baca:** `apps/api/src/common/guards/` sebelum menambah guard baru
+
+### ✅ Department Management — LOCKED
+- Department CRUD selesai
+- Relasi Department → User sudah ada di schema
+- ❌ JANGAN buat department logic di luar module yang sudah ada
+
+### ✅ Task Management — LOCKED
+- **Files:**
+  - `apps/api/src/modules/tasks/tasks.module.ts`
+  - `apps/api/src/modules/tasks/tasks.controller.ts`
+  - `apps/api/src/modules/tasks/tasks.service.ts`
+- **Status enum:** `TODO`, `IN_PROGRESS`, `REVIEW`, `DONE`, `CANCELLED`
+- **Priority enum:** `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`
+- **Endpoints live:** GET/POST/PATCH/DELETE `/tasks`, status update, assign
+- ❌ JANGAN buat task query di service lain — gunakan `TasksService`
+
+### ✅ Task Comments — LOCKED
+- Comments terintegrasi dalam `TasksModule`
+- Endpoint: `POST /tasks/:id/comments`, `GET /tasks/:id/comments`
+- Activity log otomatis saat comment dibuat
+
+### ✅ Ownership Authorization — LOCKED
+- Guard untuk verifikasi ownership resource sudah tersedia
+- **Wajib gunakan** ownership guard untuk semua endpoint yang mengakses data spesifik user
+
+---
+
+## 6. MODUL IN PROGRESS / BELUM DIBANGUN
+
+> Urutkan pengerjaan sesuai `docs/ROADMAP.md`. Jangan loncat urutan.
+
+### 🚧 Phase 5 — Sedang Dikerjakan:
+
+| Modul | Status | Dependency |
+|-------|--------|------------|
+| Work Evidence System | Belum dimulai | Task Management ✅ |
+| Daily Work Log System | Belum dimulai | Task Management ✅ |
+| Manager Review System | Belum dimulai | Work Evidence, Work Log |
+| Workforce Session Tracking | Belum dimulai | User Management ✅ |
+| KPI Engine | Belum dimulai | Task Management ✅, Work Log |
+Notification System✅
+
+### 🔒 Phase 6+ — LOCKED (Jangan dikerjakan dulu):
+
+| Modul | Keterangan |
+|-------|-----------|
+| Analytics Dashboard | Butuh data dari KPI Engine |
+| Workflow Automation | Butuh Analytics |
+| Async Reporting | Butuh Analytics + Workflow |
+| Knowledge Base (RAG) | Butuh semua foundation |
+| **AI Workspace** | **🔒 LOCKED KERAS — baca seksi 7** |
+| **AI Agents** | **🔒 LOCKED KERAS — baca seksi 7** |
+| **Manager Copilot** | **🔒 LOCKED KERAS — baca seksi 7** |
+
+---
+
+## 7. AI DEVELOPMENT — ATURAN KERAS
+
+> Baca `docs/AI_ARCHITECTURE.md` untuk detail lengkap.
+
+### AI bukan:
+- ❌ Chatbot umum
+- ❌ ChatGPT clone
+- ❌ Fitur percakapan biasa
+- ❌ Fitur dekoratif
+
+### AI adalah:
+> **Workforce Intelligence Engine** yang menganalisis data nyata dari sistem AWOS untuk menghasilkan insight yang actionable.
+
+### AI TIDAK BOLEH dibangun sebelum data berikut tersedia:
+
+```
+REQUIRED DATA DEPENDENCY untuk AI Evaluation:
+
+[1] Task data          → Task Management ✅ DONE
+[2] Work Evidence      → Evidence System ❌ BELUM ADA
+[3] Work Log           → Work Log System ❌ BELUM ADA
+[4] Manager Review     → Review System   ❌ BELUM ADA
+[5] KPI Records        → KPI Engine      ❌ BELUM ADA
+
+Status: 1/5 dependency terpenuhi
+→ AI Evaluation DILARANG diimplementasi sampai semua ✅
+```
+
+### Konsekuensi melanggar aturan ini:
+AI yang dibangun tanpa data akan menghasilkan insight palsu dan merusak kepercayaan user terhadap platform.
+
+---
+
+## 8. ARSITEKTUR SISTEM
 
 ### Monorepo Structure
 ```
 awos/
 ├── apps/
-│   ├── api/          # NestJS Backend (Port 3001)
-│   └── web/          # Next.js Frontend (Port 3000)
+│   ├── api/              # NestJS Backend (Port 3001)
+│   └── web/              # Next.js Frontend (Port 3000)
 ├── services/
-│   └── ai/           # FastAPI AI Service (Port 8000)
+│   └── ai/               # FastAPI AI Service (Port 8000) 🔒 LOCKED
 ├── packages/
-│   ├── shared/       # Shared types, DTOs, constants
-│   ├── ui/           # Shared UI components (jika multi-app)
-│   └── config/       # Shared config (eslint, tsconfig base)
-├── infrastructure/   # Docker, K8s, Terraform configs
-├── docs/             # Dokumentasi teknis
-├── scripts/          # Dev & deployment scripts
-├── prisma.config.ts  # Root prisma config
+│   ├── shared/           # Shared types, DTOs, constants
+│   ├── ui/               # Shared UI components
+│   └── config/           # Shared config (eslint, tsconfig base)
+├── infrastructure/       # Docker, K8s, Terraform configs
+├── docs/                 # Dokumentasi teknis (Source of Truth)
+├── scripts/              # Dev & deployment scripts
+├── prisma.config.ts
 └── docker-compose.yml
 ```
 
-### Tech Stack
+### Tech Stack — Versi Aktual
 
-| Layer | Teknologi | Versi Target |
-|-------|-----------|--------------|
-| Frontend | Next.js (App Router) | 15.x |
-| UI Components | shadcn/ui + Tailwind CSS | Latest |
-| State Management | Zustand | 5.x |
-| Backend | NestJS | 10.x |
-| ORM | Prisma | 5.x |
-| Database | PostgreSQL | 16.x |
-| Cache | Redis | 7.x |
-| AI Service | FastAPI + LangChain | Python 3.11+ |
-| AI Model | Claude API (Anthropic) | claude-sonnet |
-| Vector DB | pgvector (dalam PostgreSQL) | Latest |
-| Realtime | Socket.io (WebSocket) | Latest |
-| Queue | BullMQ (Redis-backed) | Latest |
-| Auth | JWT + Refresh Token | - |
-| Package Manager | pnpm (workspace) | 9.x |
-| Container | Docker + Docker Compose | - |
+> ⚠️ JANGAN asumsikan versi dari memori training.
+> Selalu verifikasi dari `package.json` masing-masing app.
 
----
-
-## 3. MODUL APLIKASI
-
-### 3.1 Authentication & RBAC
-**Path:** `apps/api/src/modules/auth/`
-
-**Fitur:**
-- Register, Login, Logout
-- JWT Access Token (15 menit) + Refresh Token (7 hari)
-- Role-Based Access Control dengan roles: `SUPER_ADMIN`, `ADMIN`, `MANAGER`, `EMPLOYEE`
-- Permission guard per endpoint
-- Password hashing dengan bcrypt
-
-**Prisma Models:** `User`, `Role`, `Permission`, `RefreshToken`
-
-**Endpoints:**
-```
-POST /auth/register
-POST /auth/login
-POST /auth/logout
-POST /auth/refresh
-GET  /auth/me
-```
+| Layer | Teknologi | Catatan |
+|-------|-----------|---------|
+| Frontend | Next.js App Router | Verifikasi dari `apps/web/package.json` |
+| UI Components | shadcn/ui + Tailwind CSS | Jangan edit file di `components/ui/` manual |
+| State Management | Zustand | Jangan pakai Redux/Context untuk global state |
+| Backend | NestJS | Verifikasi versi dari `apps/api/package.json` |
+| ORM | Prisma | Selalu generate client setelah schema berubah |
+| Database | PostgreSQL | Port 5432 |
+| Cache | Redis | Port 6379 |
+| AI Service | FastAPI + LangChain | 🔒 LOCKED sampai Phase 6+ |
+| AI Model | Claude API (Anthropic) | Model: claude-sonnet |
+| Vector DB | pgvector (PostgreSQL) | 🔒 LOCKED sampai RAG dibangun |
+| Realtime | Socket.io | 🔒 LOCKED sampai Notification module |
+| Queue | BullMQ | 🔒 LOCKED sampai Reporting module |
+| Auth | JWT + Refresh Token | ✅ Sudah implemented |
+| Package Manager | pnpm workspace | Jangan pakai npm/yarn |
+| Container | Docker + Docker Compose | Untuk semua service |
 
 ---
 
-### 3.2 Task Management
-**Path:** `apps/api/src/modules/tasks/`
+## 9. STRUKTUR FOLDER BACKEND — `apps/api/src/`
 
-**Fitur:**
-- CRUD task dengan status: `TODO`, `IN_PROGRESS`, `REVIEW`, `DONE`, `CANCELLED`
-- Priority: `LOW`, `MEDIUM`, `HIGH`, `CRITICAL`
-- Assign task ke user/team
-- Task dependencies (blocking/blocked-by)
-- Sub-task (parent-child)
-- Due date + reminder
-- Task comment & activity log
-- Tag/label system
-- File attachment reference
-
-**Prisma Models:** `Task`, `TaskComment`, `TaskActivity`, `TaskTag`, `TaskAttachment`
-
-**Endpoints:**
-```
-GET    /tasks
-POST   /tasks
-GET    /tasks/:id
-PATCH  /tasks/:id
-DELETE /tasks/:id
-POST   /tasks/:id/comments
-GET    /tasks/:id/activity
-PATCH  /tasks/:id/status
-POST   /tasks/:id/assign
-```
-
----
-
-### 3.3 KPI Dashboard
-**Path:** `apps/api/src/modules/kpi/`
-
-**Fitur:**
-- Definisi KPI per role/departemen
-- Input KPI progress oleh employee
-- Auto-calculate KPI dari task completion
-- Historical KPI tracking (weekly, monthly, quarterly)
-- KPI alert ketika di bawah threshold
-- Team & individual KPI comparison
-
-**Prisma Models:** `KPIDefinition`, `KPIRecord`, `KPIAlert`
-
-**Endpoints:**
-```
-GET    /kpi/definitions
-POST   /kpi/definitions
-GET    /kpi/records
-POST   /kpi/records
-GET    /kpi/dashboard/:userId
-GET    /kpi/team/:teamId
-```
-
----
-
-### 3.4 Realtime Notification
-**Path:** `apps/api/src/modules/notifications/`
-
-**Fitur:**
-- Push notification via WebSocket (Socket.io)
-- Notification types: `TASK_ASSIGNED`, `TASK_UPDATED`, `KPI_ALERT`, `MENTION`, `WORKFLOW_TRIGGER`, `SYSTEM`
-- Notification read/unread state
-- Notification preferences per user
-- In-app notification center
-
-**Prisma Models:** `Notification`, `NotificationPreference`
-
-**WebSocket Events:**
-```
-notification:new
-notification:read
-notification:readAll
-```
-
----
-
-### 3.5 AI Workspace
-**Path:** `apps/api/src/modules/ai-workspace/` + `services/ai/`
-
-**Fitur:**
-- Chat interface dengan AI assistant internal
-- Context-aware: AI tahu data task, KPI, dan workflow user
-- Conversation history per user
-- AI bisa create/update task langsung dari chat
-- AI bisa generate report summary
-- AI bisa detect bottleneck dari data KPI
-
-**AI Capabilities:**
-- Summarization (laporan, task list, KPI)
-- Recommendation (prioritas task, workflow improvement)
-- Natural language task creation
-- Bottleneck detection dari data historis
-- Productivity insights
-
-**Endpoints (via API yang proxy ke FastAPI):**
-```
-POST /ai/chat
-GET  /ai/conversations
-GET  /ai/conversations/:id
-DELETE /ai/conversations/:id
-POST /ai/summarize
-POST /ai/analyze-kpi
-```
-
----
-
-### 3.6 Knowledge Base AI (RAG System)
-**Path:** `apps/api/src/modules/knowledge/` + `services/ai/`
-
-**Fitur:**
-- Upload dokumen (PDF, DOCX, TXT, MD)
-- Automatic chunking & embedding ke pgvector
-- Semantic search atas knowledge base
-- AI menjawab pertanyaan berdasarkan dokumen internal
-- Knowledge categorization (SOP, Policy, Technical Docs)
-- Access control per dokumen
-
-**Prisma Models:** `KnowledgeDocument`, `KnowledgeChunk`, `KnowledgeCategory`
-
-**Endpoints:**
-```
-POST   /knowledge/documents      # Upload dokumen
-GET    /knowledge/documents
-GET    /knowledge/documents/:id
-DELETE /knowledge/documents/:id
-POST   /knowledge/search         # Semantic search
-POST   /knowledge/ask            # RAG Q&A
-```
-
----
-
-### 3.7 Workflow Automation
-**Path:** `apps/api/src/modules/workflow/`
-
-**Fitur:**
-- Visual workflow builder (trigger → condition → action)
-- Trigger types: `TASK_STATUS_CHANGE`, `KPI_THRESHOLD`, `SCHEDULE`, `MANUAL`, `WEBHOOK`
-- Action types: `CREATE_TASK`, `SEND_NOTIFICATION`, `UPDATE_KPI`, `CALL_WEBHOOK`, `ASSIGN_USER`, `SEND_EMAIL`
-- Condition logic (AND/OR)
-- Workflow execution log
-- Template workflow yang bisa di-clone
-
-**Prisma Models:** `Workflow`, `WorkflowTrigger`, `WorkflowCondition`, `WorkflowAction`, `WorkflowExecution`
-
-**Endpoints:**
-```
-GET    /workflows
-POST   /workflows
-GET    /workflows/:id
-PATCH  /workflows/:id
-DELETE /workflows/:id
-POST   /workflows/:id/execute
-GET    /workflows/:id/executions
-POST   /workflows/templates
-```
-
----
-
-### 3.8 Async Reporting
-**Path:** `apps/api/src/modules/reports/`
-
-**Fitur:**
-- Generate report secara async (via BullMQ queue)
-- Report types: `TASK_SUMMARY`, `KPI_REPORT`, `TEAM_PRODUCTIVITY`, `WORKFLOW_AUDIT`
-- Format output: PDF, Excel, JSON
-- Scheduled report (cron)
-- Report sharing via link
-
-**Prisma Models:** `Report`, `ReportSchedule`
-
-**Queue:** `report-generation` (BullMQ)
-
-**Endpoints:**
-```
-POST   /reports/generate
-GET    /reports
-GET    /reports/:id
-GET    /reports/:id/download
-POST   /reports/schedules
-GET    /reports/schedules
-PATCH  /reports/schedules/:id
-DELETE /reports/schedules/:id
-```
-
----
-
-### 3.9 Productivity Analytics
-**Path:** `apps/api/src/modules/analytics/`
-
-**Fitur:**
-- Task completion rate per user/team
-- Average task resolution time
-- Overdue task trends
-- KPI trend visualization
-- Team workload distribution
-- Peak productivity hours (dari task activity timestamps)
-- Department comparison dashboard
-
-**Endpoints:**
-```
-GET /analytics/overview
-GET /analytics/tasks
-GET /analytics/kpi
-GET /analytics/team/:teamId
-GET /analytics/user/:userId
-GET /analytics/workload
-```
-
----
-
-### 3.10 AI Agents
-**Path:** `services/ai/agents/`
-
-**Agent Types:**
-- **Task Agent**: Bisa buat, update, assign task via natural language
-- **KPI Agent**: Analisis KPI, beri rekomendasi improvement
-- **Report Agent**: Generate laporan otomatis dari data
-- **Workflow Agent**: Saran optimasi workflow berdasarkan data historis
-
-**Implementasi:** LangChain Agents dengan tool calling ke API internal AWOS
-
----
-
-## 4. DATABASE SCHEMA (PRISMA)
-
-**Path:** `apps/api/prisma/schema.prisma`
-
-### Konvensi Prisma:
-- Semua model menggunakan `id` sebagai UUID (`@default(uuid())`)
-- Selalu ada `createdAt DateTime @default(now())` dan `updatedAt DateTime @updatedAt`
-- Soft delete menggunakan `deletedAt DateTime?`
-- Enum didefinisikan di level Prisma
-- Relasi menggunakan nama yang deskriptif
-
-### Core Models Overview:
-```prisma
-// User & Auth
-model User         { ... }
-model Role         { ... }
-model Permission   { ... }
-model RefreshToken { ... }
-
-// Organization
-model Organization { ... }
-model Department   { ... }
-model Team         { ... }
-model TeamMember   { ... }
-
-// Task
-model Task           { ... }
-model TaskComment    { ... }
-model TaskActivity   { ... }
-model TaskTag        { ... }
-model TaskAttachment { ... }
-
-// KPI
-model KPIDefinition { ... }
-model KPIRecord     { ... }
-model KPIAlert      { ... }
-
-// Notification
-model Notification           { ... }
-model NotificationPreference { ... }
-
-// Knowledge
-model KnowledgeDocument  { ... }
-model KnowledgeChunk     { ... }
-model KnowledgeCategory  { ... }
-
-// Workflow
-model Workflow          { ... }
-model WorkflowTrigger   { ... }
-model WorkflowCondition { ... }
-model WorkflowAction    { ... }
-model WorkflowExecution { ... }
-
-// Report
-model Report         { ... }
-model ReportSchedule { ... }
-
-// AI
-model AIConversation { ... }
-model AIMessage      { ... }
-```
-
----
-
-## 5. STRUKTUR FOLDER DETAIL
-
-### Backend (NestJS) — `apps/api/src/`
 ```
 src/
-├── main.ts                    # Bootstrap NestJS app
-├── app.module.ts              # Root module
+├── main.ts
+├── app.module.ts
 ├── app.controller.ts
 ├── app.service.ts
 │
 ├── common/
-│   ├── decorators/            # Custom decorators (@CurrentUser, @Roles, dll)
-│   ├── filters/               # Exception filters (global HTTP exception filter)
-│   ├── guards/                # Guards (JwtAuthGuard, RolesGuard)
-│   ├── interceptors/          # Interceptors (logging, transform response)
-│   ├── pipes/                 # Validation pipes
-│   └── middleware/            # HTTP middlewares
+│   ├── decorators/          # @CurrentUser(), @Roles(), @Public()
+│   ├── filters/             # GlobalHttpExceptionFilter
+│   ├── guards/              # JwtAuthGuard, RolesGuard, OwnershipGuard
+│   ├── interceptors/        # TransformResponseInterceptor, LoggingInterceptor
+│   ├── pipes/               # ValidationPipe config
+│   └── middleware/
 │
 ├── config/
-│   ├── app.config.ts          # App config (port, env)
-│   ├── database.config.ts     # PostgreSQL/Prisma config
-│   ├── redis.config.ts        # Redis config
-│   ├── jwt.config.ts          # JWT config
-│   └── ai.config.ts           # AI service URL config
+│   ├── app.config.ts
+│   ├── database.config.ts
+│   ├── redis.config.ts
+│   ├── jwt.config.ts
+│   └── ai.config.ts         # 🔒 Belum aktif
 │
 ├── prisma/
-│   ├── prisma.module.ts       # PrismaModule (global)
-│   └── prisma.service.ts      # PrismaService extends PrismaClient
+│   ├── prisma.module.ts     # Global module
+│   └── prisma.service.ts    # Extends PrismaClient
 │
 ├── shared/
-│   ├── dto/                   # Shared DTOs (PaginationDto, dll)
-│   ├── types/                 # Shared TypeScript types
-│   └── constants/             # App constants, enums
+│   ├── dto/                 # PaginationDto, ResponseDto
+│   ├── types/               # AppRequest, JwtPayload
+│   └── constants/           # Enums, magic strings
 │
 ├── utils/
-│   ├── pagination.util.ts     # Pagination helper
-│   ├── hash.util.ts           # bcrypt helpers
-│   └── date.util.ts           # Date helpers
+│   ├── pagination.util.ts
+│   ├── hash.util.ts
+│   └── date.util.ts
 │
 └── modules/
-    ├── auth/
-    │   ├── auth.module.ts
-    │   ├── auth.controller.ts
-    │   ├── auth.service.ts
-    │   ├── strategies/
-    │   │   ├── jwt.strategy.ts
-    │   │   └── jwt-refresh.strategy.ts
-    │   ├── guards/
-    │   │   └── jwt-auth.guard.ts
-    │   └── dto/
-    │       ├── login.dto.ts
-    │       └── register.dto.ts
+    ├── auth/                # ✅ LOCKED
+    ├── users/               # ✅ LOCKED
+    ├── departments/         # ✅ LOCKED
+    ├── tasks/               # ✅ LOCKED
+    ├── health/              # ✅ LOCKED
     │
-    ├── users/
-    │   ├── users.module.ts
-    │   ├── users.controller.ts
-    │   ├── users.service.ts
-    │   └── dto/
+    ├── evidence/            # 🚧 Phase 5 — belum ada
+    ├── work-log/            # 🚧 Phase 5 — belum ada
+    ├── reviews/             # 🚧 Phase 5 — belum ada
+    ├── sessions/            # 🚧 Phase 5 — belum ada
+    ├── kpi/                 # 🚧 Phase 5 — belum ada
     │
-    ├── tasks/
-    │   ├── tasks.module.ts
-    │   ├── tasks.controller.ts
-    │   ├── tasks.service.ts
-    │   ├── tasks.gateway.ts   # WebSocket gateway untuk task updates
-    │   └── dto/
-    │
-    ├── kpi/
-    ├── notifications/
-    │   ├── notifications.module.ts
-    │   ├── notifications.service.ts
-    │   └── notifications.gateway.ts  # Socket.io gateway
-    ├── ai-workspace/
-    ├── knowledge/
-    ├── workflow/
-    ├── reports/
-    ├── analytics/
-    └── health/                        # Health check endpoint
-```
-
-### Frontend (Next.js) — `apps/web/`
-```
-web/
-├── app/                         # Next.js App Router
-│   ├── layout.tsx               # Root layout
-│   ├── page.tsx                 # Landing / redirect
-│   ├── globals.css
-│   │
-│   ├── (auth)/                  # Auth route group (no sidebar)
-│   │   ├── login/page.tsx
-│   │   └── register/page.tsx
-│   │
-│   └── (dashboard)/             # Dashboard route group (with sidebar)
-│       ├── layout.tsx           # Dashboard layout (sidebar + header)
-│       ├── page.tsx             # Dashboard home
-│       ├── tasks/
-│       │   ├── page.tsx         # Task list
-│       │   └── [id]/page.tsx    # Task detail
-│       ├── kpi/
-│       │   └── page.tsx
-│       ├── ai/
-│       │   └── page.tsx         # AI chat workspace
-│       ├── knowledge/
-│       │   └── page.tsx
-│       ├── workflows/
-│       │   └── page.tsx
-│       ├── reports/
-│       │   └── page.tsx
-│       ├── analytics/
-│       │   └── page.tsx
-│       └── settings/
-│           └── page.tsx
-│
-├── components/
-│   ├── ui/                      # shadcn/ui components (jangan edit manual)
-│   ├── layout/                  # Sidebar, Header, Breadcrumb
-│   ├── tasks/                   # Task-specific components
-│   ├── kpi/                     # KPI-specific components
-│   ├── ai/                      # AI chat components
-│   ├── knowledge/               # Knowledge base components
-│   ├── workflow/                # Workflow builder components
-│   ├── analytics/               # Chart & analytics components
-│   └── shared/                  # Reusable shared components
-│
-├── hooks/                       # Custom React hooks
-│   ├── useAuth.ts
-│   ├── useTasks.ts
-│   ├── useSocket.ts             # WebSocket hook
-│   └── useAI.ts
-│
-├── lib/
-│   ├── utils.ts                 # cn() dan utilities
-│   ├── api.ts                   # Axios instance + interceptors
-│   └── socket.ts                # Socket.io client setup
-│
-├── store/                       # Zustand stores
-│   ├── auth.store.ts
-│   ├── tasks.store.ts
-│   ├── notifications.store.ts
-│   └── ui.store.ts
-│
-├── types/                       # Frontend TypeScript types
-│   ├── api.types.ts
-│   ├── task.types.ts
-│   └── user.types.ts
-│
-└── constants/                   # Frontend constants
-    └── routes.ts
-```
-
-### AI Service (FastAPI) — `services/ai/`
-```
-services/ai/
-├── main.py
-├── requirements.txt
-├── .env
-├── app/
-│   ├── __init__.py
-│   ├── core/
-│   │   ├── config.py          # Settings (Pydantic BaseSettings)
-│   │   └── security.py        # API key validation
-│   ├── api/
-│   │   └── v1/
-│   │       ├── chat.py
-│   │       ├── knowledge.py
-│   │       └── analytics.py
-│   ├── services/
-│   │   ├── chat_service.py     # LangChain chat
-│   │   ├── rag_service.py      # RAG pipeline
-│   │   └── embedding_service.py
-│   ├── agents/
-│   │   ├── task_agent.py
-│   │   ├── kpi_agent.py
-│   │   └── report_agent.py
-│   └── models/
-│       └── schemas.py          # Pydantic models
+    ├── notifications/       # 🔒 Phase 6
+    ├── analytics/           # 🔒 Phase 6
+    ├── workflow/            # 🔒 Phase 7
+    ├── reports/             # 🔒 Phase 7
+    ├── knowledge/           # 🔒 Phase 8
+    └── ai-workspace/        # 🔒 Phase 9 — LOCKED KERAS
 ```
 
 ---
 
-## 6. KONVENSI CODING
+## 10. STRUKTUR FOLDER FRONTEND — `apps/web/`
 
-### TypeScript / NestJS
-
-```typescript
-// ✅ BENAR - Gunakan class-validator di semua DTO
-export class CreateTaskDto {
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(255)
-  title: string;
-
-  @IsEnum(TaskPriority)
-  @IsOptional()
-  priority?: TaskPriority = TaskPriority.MEDIUM;
-}
-
-// ✅ BENAR - Response selalu dibungkus ResponseDto
-// Gunakan interceptor TransformResponseInterceptor
-{
-  "success": true,
-  "data": { ... },
-  "message": "Task created successfully",
-  "meta": { "page": 1, "total": 100 }  // jika pagination
-}
-
-// ✅ BENAR - Error response via global exception filter
-{
-  "success": false,
-  "error": "TASK_NOT_FOUND",
-  "message": "Task dengan ID tersebut tidak ditemukan",
-  "statusCode": 404
-}
 ```
+web/
+├── app/
+│   ├── layout.tsx
+│   ├── page.tsx
+│   ├── globals.css
+│   │
+│   ├── (auth)/
+│   │   ├── login/page.tsx
+│   │   └── register/page.tsx
+│   │
+│   └── (dashboard)/
+│       ├── layout.tsx           # Sidebar + Header wrapper
+│       ├── page.tsx             # Dashboard home
+│       ├── tasks/
+│       │   ├── page.tsx
+│       │   └── [id]/page.tsx
+│       ├── evidence/            # 🚧 Phase 5
+│       ├── work-log/            # 🚧 Phase 5
+│       ├── reviews/             # 🚧 Phase 5
+│       ├── kpi/                 # 🚧 Phase 5
+│       ├── analytics/           # 🔒 Phase 6
+│       ├── ai/                  # 🔒 Phase 9
+│       ├── knowledge/           # 🔒 Phase 8
+│       ├── workflows/           # 🔒 Phase 7
+│       ├── reports/             # 🔒 Phase 7
+│       └── settings/
+│
+├── components/
+│   ├── ui/                      # ❌ JANGAN edit manual (shadcn/ui)
+│   ├── layout/                  # Sidebar, Header, Breadcrumb
+│   ├── tasks/                   # ✅ Task components
+│   ├── evidence/                # 🚧 Phase 5
+│   ├── work-log/                # 🚧 Phase 5
+│   ├── reviews/                 # 🚧 Phase 5
+│   ├── kpi/                     # 🚧 Phase 5
+│   ├── analytics/               # 🔒 Phase 6
+│   ├── ai/                      # 🔒 Phase 9
+│   └── shared/
+│
+├── hooks/
+│   ├── useAuth.ts
+│   ├── useTasks.ts
+│   ├── useEvidence.ts           # 🚧 Phase 5
+│   ├── useWorkLog.ts            # 🚧 Phase 5
+│   └── useSocket.ts             # 🔒 Phase 6
+│
+├── lib/
+│   ├── utils.ts                 # cn() utilities
+│   ├── api.ts                   # Axios instance + interceptors
+│   └── socket.ts                # 🔒 Phase 6
+│
+├── store/
+│   ├── auth.store.ts
+│   ├── tasks.store.ts
+│   ├── notifications.store.ts   # 🔒 Phase 6
+│   └── ui.store.ts
+│
+├── types/
+│   ├── api.types.ts
+│   ├── task.types.ts
+│   ├── user.types.ts
+│   └── evidence.types.ts        # 🚧 Phase 5
+│
+└── constants/
+    └── routes.ts
+```
+
+---
+
+## 11. KONVENSI CODING
 
 ### Naming Conventions
 
 | Context | Convention | Contoh |
 |---------|-----------|--------|
-| File NestJS | kebab-case | `task-management.service.ts` |
-| Class | PascalCase | `TaskManagementService` |
-| Method/Var | camelCase | `createTask()`, `taskId` |
-| Prisma Model | PascalCase | `TaskComment` |
-| DB Column | snake_case (Prisma handle) | `created_at` |
+| File NestJS | kebab-case | `work-evidence.service.ts` |
+| Class | PascalCase | `WorkEvidenceService` |
+| Method / Variable | camelCase | `createEvidence()`, `evidenceId` |
+| Prisma Model | PascalCase | `WorkEvidence` |
+| DB Column | snake_case (auto Prisma) | `created_at` |
 | ENV Variable | SCREAMING_SNAKE_CASE | `DATABASE_URL` |
-| React Component | PascalCase | `TaskCard.tsx` |
-| React Hook | camelCase + use prefix | `useTaskList.ts` |
-| Zustand Store | camelCase + Store suffix | `taskStore.ts` |
-| API Route | kebab-case plural | `/api/v1/task-comments` |
+| React Component | PascalCase | `EvidenceCard.tsx` |
+| React Hook | camelCase + `use` prefix | `useEvidenceList.ts` |
+| Zustand Store | camelCase + `Store` suffix | `evidenceStore.ts` |
+| API Route | kebab-case plural | `/api/v1/work-evidences` |
 
-### Frontend Conventions
+### Standard Response Format
 
-```tsx
-// ✅ BENAR - Semua API call via hooks, bukan langsung di component
-// hooks/useTasks.ts
-export function useTasks() {
-  return useQuery({
-    queryKey: ['tasks'],
-    queryFn: () => api.get('/tasks').then(r => r.data)
-  })
+```typescript
+// ✅ Success response (via TransformResponseInterceptor)
+{
+  "success": true,
+  "data": { ... },
+  "message": "Evidence created successfully"
 }
 
-// ✅ BENAR - Server components untuk data fetching (Next.js App Router)
-// Client components hanya untuk interaktivitas
+// ✅ Success dengan pagination
+{
+  "success": true,
+  "data": [...],
+  "meta": { "page": 1, "limit": 10, "total": 100, "totalPages": 10 }
+}
 
-// ✅ BENAR - Gunakan 'use client' hanya jika butuh hooks/event handlers
-'use client'
+// ✅ Error response (via GlobalHttpExceptionFilter)
+{
+  "success": false,
+  "error": "EVIDENCE_NOT_FOUND",
+  "message": "Work evidence tidak ditemukan",
+  "statusCode": 404
+}
+```
 
-// ✅ BENAR - Loading state menggunakan Suspense + skeleton
-<Suspense fallback={<TaskListSkeleton />}>
-  <TaskList />
+### DTO Pattern (wajib)
+
+```typescript
+// ✅ BENAR
+import { IsString, IsNotEmpty, IsEnum, IsOptional, MaxLength } from 'class-validator';
+
+export class CreateWorkEvidenceDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(500)
+  description: string;
+
+  @IsEnum(EvidenceType)
+  type: EvidenceType;
+
+  @IsString()
+  @IsOptional()
+  attachmentUrl?: string;
+}
+```
+
+### Service Pattern (wajib)
+
+```typescript
+// ✅ BENAR — error handling di setiap method
+async findById(id: string, userId: string): Promise<WorkEvidence> {
+  const evidence = await this.prisma.workEvidence.findFirst({
+    where: { id, userId, deletedAt: null },
+  });
+
+  if (!evidence) {
+    throw new NotFoundException(`Work evidence dengan ID ${id} tidak ditemukan`);
+  }
+
+  return evidence;
+}
+```
+
+### Controller Pattern (wajib)
+
+```typescript
+// ✅ BENAR
+@Controller('work-evidences')
+@UseGuards(JwtAuthGuard)           // ← WAJIB di setiap protected controller
+@ApiBearerAuth()
+export class WorkEvidenceController {
+  constructor(private readonly evidenceService: WorkEvidenceService) {}
+
+  @Post()
+  @Roles(Role.EMPLOYEE, Role.MANAGER)
+  @UseGuards(RolesGuard)
+  create(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: CreateWorkEvidenceDto,
+  ) {
+    return this.evidenceService.create(user.sub, dto);
+  }
+}
+```
+
+### Frontend Patterns (wajib)
+
+```tsx
+// ✅ BENAR — data fetching via custom hook
+// hooks/useEvidence.ts
+export function useEvidence(taskId: string) {
+  return useQuery({
+    queryKey: ['evidence', taskId],
+    queryFn: () => api.get(`/work-evidences?taskId=${taskId}`).then(r => r.data),
+  });
+}
+
+// ✅ BENAR — loading via Suspense
+<Suspense fallback={<EvidenceListSkeleton />}>
+  <EvidenceList taskId={taskId} />
 </Suspense>
+
+// ✅ BENAR — 'use client' hanya jika perlu interaktivitas
+'use client';
+
+// ❌ SALAH — fetch langsung di component
+const res = await fetch('/api/v1/evidence'); // jangan
 ```
 
 ---
 
-## 7. ENVIRONMENT VARIABLES
+## 12. ENVIRONMENT VARIABLES
 
-### Backend (`apps/api/.env`)
+### Backend — `apps/api/.env`
 ```env
 # App
 NODE_ENV=development
@@ -657,7 +693,7 @@ JWT_EXPIRES_IN=15m
 JWT_REFRESH_SECRET=your-refresh-secret-key
 JWT_REFRESH_EXPIRES_IN=7d
 
-# AI Service
+# AI Service (belum aktif - Phase 9)
 AI_SERVICE_URL=http://localhost:8000
 AI_SERVICE_API_KEY=internal-api-key
 
@@ -665,14 +701,14 @@ AI_SERVICE_API_KEY=internal-api-key
 CORS_ORIGINS=http://localhost:3000
 ```
 
-### Frontend (`apps/web/.env.local`)
+### Frontend — `apps/web/.env.local`
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1
 NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
 NEXT_PUBLIC_APP_NAME=AWOS
 ```
 
-### AI Service (`services/ai/.env`)
+### AI Service — `services/ai/.env` (🔒 belum aktif)
 ```env
 ANTHROPIC_API_KEY=sk-ant-...
 DATABASE_URL=postgresql://awos:awos_password@localhost:5432/awos_db
@@ -682,187 +718,229 @@ ENVIRONMENT=development
 
 ---
 
-## 8. DOCKER & INFRASTRUKTUR
+## 13. DATABASE — PRISMA CONVENTIONS
 
-### Services di Docker Compose:
-```yaml
-services:
-  postgres:    # Port 5432
-  redis:       # Port 6379
-  api:         # Port 3001 (NestJS)
-  web:         # Port 3000 (Next.js)
-  ai-service:  # Port 8000 (FastAPI)
-  pgadmin:     # Port 5050 (dev only)
+**Path schema:** `apps/api/prisma/schema.prisma`
+
+> ⚠️ Selalu baca schema aktual sebelum menambah model atau field.
+> Jangan asumsikan field yang ada berdasarkan dokumen ini.
+
+### Konvensi wajib:
+
+```prisma
+model ContohModel {
+  id        String    @id @default(uuid())      // Selalu UUID
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?                            // Soft delete
+
+  // ... fields lain
+}
 ```
 
----
-
-## 9. API VERSIONING & GLOBAL PREFIX
-
-- Semua API endpoint menggunakan prefix: `/api/v1/`
-- Contoh: `http://localhost:3001/api/v1/tasks`
-- Health check: `GET /health` (tanpa prefix)
-- WebSocket namespace: `/socket.io`
-
----
-
-## 10. AUTHENTICATION FLOW
-
-```
-1. POST /api/v1/auth/login
-   → Returns: { accessToken, refreshToken, user }
-
-2. Frontend simpan accessToken di memory (Zustand)
-   Frontend simpan refreshToken di httpOnly cookie
-
-3. Setiap request: Authorization: Bearer <accessToken>
-
-4. Jika 401, frontend auto-call POST /api/v1/auth/refresh
-   → Returns: { accessToken }
-
-5. POST /api/v1/auth/logout
-   → Invalidate refreshToken di DB
-```
-
----
-
-## 11. WEBSOCKET EVENTS
-
-### Client → Server
-```
-task:subscribe    { taskId }
-task:unsubscribe  { taskId }
-room:join         { roomId }
-```
-
-### Server → Client
-```
-notification:new     { notification }
-task:updated         { task }
-task:comment:new     { comment, taskId }
-kpi:alert            { alert }
-workflow:executed    { execution }
-```
-
----
-
-## 12. ATURAN PENTING UNTUK AGENT
-
-### ✅ SELALU lakukan:
-1. Baca file yang ada sebelum membuat file baru
-2. Ikuti struktur folder yang sudah didefinisikan di dokumen ini
-3. Gunakan Prisma untuk semua database operation (jangan raw SQL kecuali ada kebutuhan khusus)
-4. Validasi semua input menggunakan class-validator
-5. Tambahkan JSDoc/comment untuk fungsi yang kompleks
-6. Gunakan TypeScript strict mode
-7. Semua secret/credential dari environment variable
-8. Tambahkan error handling di semua service method
-9. Gunakan `PrismaService` yang sudah ada, jangan buat Prisma instance baru
-10. Import dari `@nestjs/common` untuk decorator NestJS standar
-
-### ❌ JANGAN pernah:
-1. Hard-code credential, API key, atau URL
-2. Buat file di luar struktur yang sudah ditentukan tanpa alasan jelas
-3. Menggunakan `any` di TypeScript tanpa alasan yang sangat kuat
-4. Skip validasi DTO
-5. Langsung akses database dari controller (selalu via service)
-6. Membuat state management baru selain Zustand
-7. Menginstall library baru tanpa menyebutkan alasannya
-8. Mengubah shadcn/ui components di `components/ui/` secara manual
-9. Membuat API endpoint tanpa autentikasi (kecuali auth endpoints)
-10. Lupa menambahkan guard `@UseGuards(JwtAuthGuard)` di protected routes
-
-### 🔄 Urutan development yang benar:
-```
-1. Prisma schema → 2. Migration → 3. DTO → 4. Service → 5. Controller → 6. Module → 7. Frontend types → 8. API hook → 9. UI Component
-```
-
----
-
-## 13. TESTING
-
-### Backend
-- Unit test: `*.spec.ts` di samping file yang ditest
-- E2E test: `apps/api/test/`
-- Framework: Jest
-- Mock Prisma: gunakan `jest-mock-extended`
-
-### Frontend
-- Unit test: `*.test.tsx`
-- Framework: Vitest + Testing Library
-
----
-
-## 14. DEVELOPMENT COMMANDS
+### Workflow perubahan schema:
 
 ```bash
-# Install semua dependencies (dari root)
-pnpm install
+# 1. Edit schema
+nano apps/api/prisma/schema.prisma
 
-# Jalankan semua service (development)
-docker-compose up -d postgres redis  # Start DB dulu
-pnpm --filter api run start:dev       # NestJS dev server
-pnpm --filter web run dev             # Next.js dev server
+# 2. Buat migration
+pnpm --filter api run prisma migrate dev --name nama_migration
+
+# 3. Generate client
+pnpm --filter api run prisma generate
+
+# 4. Verifikasi
+pnpm --filter api run prisma studio
+```
+
+### Aturan relasi:
+- Nama relasi harus deskriptif: `assignedTasks` bukan `tasks`
+- Foreign key eksplisit di kedua sisi relasi
+- Cascade delete harus eksplisit dan dipikirkan matang
+
+---
+
+## 14. API CONVENTIONS
+
+- Prefix semua endpoint: `/api/v1/`
+- Health check: `GET /health` (tanpa prefix, tanpa auth)
+- WebSocket namespace: `/` dengan room-based subscription (🔒 Phase 6)
+
+### Auth Flow:
+```
+POST /api/v1/auth/login
+  → { accessToken, refreshToken (httpOnly cookie), user }
+
+Setiap request:
+  Authorization: Bearer <accessToken>
+
+Jika 401:
+  POST /api/v1/auth/refresh → { accessToken baru }
+
+POST /api/v1/auth/logout
+  → Invalidate refreshToken di DB
+```
+
+---
+
+## 15. PRISMA SERVICE — CARA PENGGUNAAN YANG BENAR
+
+```typescript
+// ✅ BENAR — inject PrismaService, jangan buat instance baru
+@Injectable()
+export class WorkEvidenceService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async create(userId: string, dto: CreateWorkEvidenceDto) {
+    return this.prisma.workEvidence.create({
+      data: { ...dto, userId },
+    });
+  }
+}
+
+// ❌ SALAH — jangan buat PrismaClient baru
+const prisma = new PrismaClient(); // DILARANG
+```
+
+---
+
+## 16. MODULE REGISTRATION — PATTERN WAJIB
+
+```typescript
+// ✅ BENAR — setiap module baru harus terdaftar di app.module.ts
+@Module({
+  imports: [
+    PrismaModule,       // sudah global, tapi pastikan tersedia
+    WorkEvidenceModule, // ← daftarkan di sini
+  ],
+})
+export class AppModule {}
+
+// ✅ BENAR — struktur module baru
+@Module({
+  controllers: [WorkEvidenceController],
+  providers: [WorkEvidenceService],
+  exports: [WorkEvidenceService],   // export jika dipakai modul lain
+})
+export class WorkEvidenceModule {}
+```
+
+---
+
+## 17. DEFINITION OF DONE — Kapan Modul Dianggap Selesai
+
+Modul dianggap **SELESAI** hanya jika semua checklist berikut terpenuhi:
+
+```
+Backend:
+[ ] Prisma schema model selesai + migration berhasil dijalankan
+[ ] DTO tersedia dengan validasi class-validator lengkap
+[ ] Service implemented dengan error handling di setiap method
+[ ] Controller implemented dengan JwtAuthGuard + RolesGuard
+[ ] Module registered di app.module.ts
+[ ] Unit test minimal untuk service (happy path + error case)
+[ ] Endpoint dapat dipanggil dan return response yang benar
+
+Frontend:
+[ ] Types didefinisikan di folder types/
+[ ] API hook dibuat di folder hooks/
+[ ] UI Component dibuat di folder components/<module>/
+[ ] Page route dibuat di app/(dashboard)/<module>/
+[ ] Loading state dengan skeleton
+[ ] Error state dengan pesan yang jelas
+
+Dokumentasi:
+[ ] Section "Completed Modules" di CLAUDE.md diupdate
+[ ] File yang dibuat dicantumkan dengan path lengkap
+[ ] Catatan khusus (jika ada) ditambahkan
+```
+
+---
+
+## 18. MANDATORY POST-MODULE PROCESS
+
+Setelah setiap modul selesai, agent **WAJIB** melakukan:
+
+1. **Run tests** — `pnpm --filter api run test`
+2. **Laporkan hasil** — file apa yang dibuat, endpoint apa yang tersedia
+3. **Update CLAUDE.md** — pindahkan modul dari "In Progress" ke "Completed"
+4. **Verifikasi roadmap** — konfirmasi posisi di `docs/ROADMAP.md`
+5. **Dampak AI** — jelaskan apakah modul ini membuka data dependency untuk AI
+
+---
+
+## 19. DEVELOPMENT COMMANDS
+
+```bash
+# Setup awal
+pnpm install                                        # Install semua dependencies
+
+# Development
+docker-compose up -d postgres redis                  # Start infrastructure
+pnpm --filter api run start:dev                      # NestJS (port 3001)
+pnpm --filter web run dev                            # Next.js (port 3000)
 
 # Database
-pnpm --filter api run prisma:migrate  # Run migrations
-pnpm --filter api run prisma:studio   # Prisma Studio GUI
-pnpm --filter api run prisma:generate # Generate Prisma Client
+pnpm --filter api run prisma:migrate                 # Jalankan pending migrations
+pnpm --filter api run prisma:generate                # Generate Prisma Client
+pnpm --filter api run prisma:studio                  # Buka Prisma Studio (port 5555)
+
+# Testing
+pnpm --filter api run test                           # Unit tests
+pnpm --filter api run test:cov                       # Test + coverage
+pnpm --filter api run test:e2e                       # E2E tests
 
 # Build
 pnpm --filter api run build
 pnpm --filter web run build
 
-# Testing
-pnpm --filter api run test
-pnpm --filter api run test:e2e
+# Linting
+pnpm --filter api run lint
+pnpm --filter web run lint
 ```
 
 ---
 
-## 15. CURRENT STATUS & PROGRESS
+## 20. ATURAN INSTALASI LIBRARY BARU
 
-### ✅ Sudah Ada (Foundation):
-- [x] Monorepo structure (pnpm workspace)
-- [x] NestJS app bootstrap (`apps/api`)
-- [x] Next.js app bootstrap (`apps/web`)
-- [x] shadcn/ui setup di web (`button`, `card`, `dialog`, `dropdown-menu`, `input`, `table`)
-- [x] Prisma schema file (perlu diisi)
-- [x] Docker Compose (perlu dilengkapi)
-- [x] Auth module structure (`apps/api/src/modules/auth/`)
-- [x] Users module structure (`apps/api/src/modules/users/`)
-- [x] Health module (`apps/api/src/modules/health/`)
-- [x] Common, config, shared, utils folders
+Sebelum menginstall library baru:
 
-### 🚧 Perlu Dibangun (Prioritas):
-1. **Prisma Schema** — definisikan semua models
-2. **Auth Module** — implement JWT auth lengkap
-3. **Users Module** — CRUD user + profile
-4. **Task Module** — core task management
-5. **Notification Module** — WebSocket + in-app notif
-6. **KPI Module** — definisi & tracking
-7. **Frontend Auth** — login/register pages + auth flow
-8. **Frontend Dashboard** — layout + task views
-9. **AI Service** — FastAPI setup + LangChain
-10. **Workflow Module** — automation engine
+1. Verifikasi apakah sudah ada library yang bisa melakukan hal yang sama
+2. Cek apakah library tersebut sesuai dengan tech stack (baca Section 8)
+3. **Laporkan ke user terlebih dahulu** dengan penjelasan:
+   - Nama library
+   - Tujuan penggunaan
+   - Alternatif yang sudah ada (jika ada)
+   - Apakah ini blocking progress
+4. Tunggu konfirmasi sebelum menjalankan `pnpm add`
 
 ---
 
-## 16. GLOSSARY
+## 21. GLOSSARY
 
 | Term | Definisi |
 |------|----------|
 | AWOS | AI Workforce Operating System |
-| WFH | Work From Home |
+| WFH / WFA | Work From Home / Work From Anywhere |
 | RBAC | Role-Based Access Control |
-| RAG | Retrieval-Augmented Generation |
+| RAG | Retrieval-Augmented Generation (🔒 Phase 8) |
 | KPI | Key Performance Indicator |
-| BullMQ | Redis-based job queue library |
-| pgvector | PostgreSQL extension untuk vector similarity search |
-| DTO | Data Transfer Object (NestJS input validation class) |
+| BullMQ | Redis-based job queue (🔒 Phase 7) |
+| pgvector | PostgreSQL vector extension untuk RAG (🔒 Phase 8) |
+| DTO | Data Transfer Object — class validasi input NestJS |
 | Guard | NestJS middleware untuk authorization |
-| Gateway | NestJS WebSocket handler |
-| Agent | AI agent yang bisa mengeksekusi tools/actions |
+| Gateway | NestJS WebSocket handler (🔒 Phase 6) |
+| Agent | AI agent yang bisa eksekusi tools (🔒 Phase 9) |
+| Evidence | Work Evidence — bukti output pekerjaan (🚧 Phase 5) |
+| Work Log | Catatan harian aktivitas kerja (🚧 Phase 5) |
 
 ---
 
+*Dokumen ini wajib diupdate setiap kali:*
+- *Modul baru selesai diimplementasi*
+- *Ada keputusan arsitektur baru*
+- *Phase roadmap berubah*
+- *Tech stack berubah*
+
+*Update terakhir wajib mencantumkan tanggal dan modul yang berubah.*

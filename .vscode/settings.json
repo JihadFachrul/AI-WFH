@@ -1,0 +1,9 @@
+{
+  "// catatan": "dist/ adalah output build (di-generate nest build). Disembunyikan dari Explorer & Search agar tidak dibuka sebagai source — file di dalamnya bukan kode yang diedit.",
+  "files.exclude": {
+    "**/dist": true
+  },
+  "search.exclude": {
+    "**/dist": true
+  }
+}
