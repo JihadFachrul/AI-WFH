@@ -12,29 +12,21 @@ Tujuan AI adalah membantu perusahaan memahami produktivitas dan performa kerja b
 
 # Evolusi AI
 
-Phase 1
+AI dibangun bertahap di atas tiga pilar AWOS:
 
-Task Management
+**Phase 5 — Workforce Accountability** (✅ selesai)
+- Task, Work Evidence, Work Log, Manager Review, Work Session, KPI Foundation
 
-Phase 2
+**Phase 6 — Workforce Collaboration** (🚧 berjalan)
+- Kanban Workspace, Meeting Scheduler, Corporate Calendar, Office Feed
 
-Work Evidence
+**Phase 7 — Workforce Intelligence** (⏳ AI, locked)
+- 7.0 AI Report Evaluation
+- 7.1 Manager Copilot
+- 7.2 Workforce Intelligence
+- 7.3 AI KPI Recommendation
 
-Phase 3
-
-Work Log
-
-Phase 4
-
-Manager Review
-
-Phase 5
-
-KPI Engine
-
-Phase 6
-
-AI Workforce Intelligence
+AI hanya boleh dibangun setelah Phase 5 DAN Phase 6 selesai.
 
 ---
 
@@ -42,31 +34,61 @@ AI Workforce Intelligence
 
 AI hanya boleh melakukan evaluasi jika data berikut tersedia:
 
-* Tasks
-* Task Comments
-* Work Evidence
-* Work Logs
-* Manager Reviews
-* KPI History
-* Department Context
+* Tasks ✅ tersedia
+* Task Comments ✅ tersedia
+* Work Logs ✅ tersedia (5.1)
+* Work Evidence ✅ tersedia (5.0)
+* Manager Reviews ✅ tersedia (5.2)
+* Work Sessions ✅ tersedia (5.3)
+* KPI ✅ tersedia (5.4)
+* Department Context ✅ tersedia
+* Kanban ⏳ belum (6.0)
+* Meeting ⏳ belum (6.1)
+* Calendar ⏳ belum (6.2)
+* Office Feed ⏳ belum (6.3)
 
 Jika data belum lengkap maka confidence AI harus diturunkan.
 
+Status saat ini: seluruh data Phase 5 (accountability) sudah terkumpul. AI
+menunggu data kolaborasi Phase 6 (Kanban, Meeting, Calendar, Office Feed)
+sebelum boleh dibangun.
+
 ---
 
-# Alur Evaluasi AI
+# Alur Evaluasi AI (Dependency Graph)
 
-Task
+Task                    ✅ tersedia
 ↓
-Evidence
+Work Log                ✅ tersedia (5.1)
 ↓
-Work Log
+Evidence                ✅ tersedia (5.0)
 ↓
-Manager Review
+Manager Review          ✅ tersedia (5.2)
 ↓
-KPI Engine
+Work Session            ✅ tersedia (5.3)
 ↓
-AI Evaluation
+KPI                     ✅ tersedia (5.4)
+↓
+Kanban                  ⏳ Phase 6 (6.0)
+↓
+Meeting                 ⏳ Phase 6 (6.1)
+↓
+Calendar                ⏳ Phase 6 (6.2)
+↓
+Office Feed             ⏳ Phase 6 (6.3)
+↓
+AI Evaluation           ⏳ Phase 7 (7.0)
+↓
+Manager Copilot         ⏳ Phase 7 (7.1)
+↓
+Workforce Intelligence  ⏳ Phase 7 (7.2)
+
+Setiap lapisan menjadi fondasi lapisan di atasnya. Data accountability Phase 5
+(Task → Work Log → Evidence → Review → Session → KPI) sudah tersedia. AI (Phase 7)
+baru boleh dibangun setelah data kolaborasi Phase 6 (Kanban, Meeting, Calendar,
+Office Feed) lengkap.
+
+Status: 6/10 dependency terpenuhi.
 
 AI tidak boleh melakukan evaluasi hanya berdasarkan status task.
 

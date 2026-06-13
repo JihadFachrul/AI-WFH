@@ -145,6 +145,20 @@ export class NotificationsService {
     );
   }
 
+  /** Trigger: manager memberikan review (approved / revision). */
+  async notifyTaskReview(
+    recipientId: string,
+    approved: boolean,
+  ): Promise<void> {
+    await this.createNotification(
+      recipientId,
+      'Task Review',
+      approved
+        ? 'Task telah disetujui manager.'
+        : 'Task memerlukan revisi.',
+    );
+  }
+
   /** Trigger: status task berubah. */
   async notifyTaskStatusUpdated(
     recipientId: string,

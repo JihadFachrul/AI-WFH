@@ -33,6 +33,20 @@ enum TaskPriority {
   CRITICAL
 }
 
+enum ReviewDecision {
+  APPROVED
+  REVISION
+}
+
+enum CalendarEventType {
+  MEETING
+  COMPANY_EVENT
+  TRAINING
+  HOLIDAY
+  DIRECTOR_SCHEDULE
+  ANNOUNCEMENT
+}
+
 // ============================================================
 // MODELS
 // ============================================================
@@ -57,6 +71,16 @@ model User {
 
   comments      TaskComment[]
   notifications Notification[]
+
+  uploadedEvidences TaskEvidence[]
+  workLogs          WorkLog[]
+  reviews           TaskReview[]
+  workSessions      WorkSession[]
+
+  createdMeetings      Meeting[]            @relation("MeetingCreator")
+  meetingParticipations MeetingParticipant[]
+
+  createdCalendarEvents CalendarEvent[] @relation("CalendarEventCreator")
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -93,7 +117,17 @@ model Task {
   creatorId String
   creator   User   @relation("TaskCreator", fields: [creatorId], references: [id])
 
-  comments TaskComment[]
+  // Work Evidence (Modul 5.0)
+  completionNote String?
+  completedAt    DateTime?
+
+  // Manager Review (Modul 5.2)
+  submittedForReviewAt DateTime?
+
+  comments  TaskComment[]
+  evidences TaskEvidence[]
+  workLogs  WorkLog[]
+  reviews   TaskReview[]
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -102,6 +136,135 @@ model Task {
   @@index([assigneeId])
   @@index([creatorId])
   @@index([status])
+}
+
+model TaskEvidence {
+  id     String @id @default(uuid())
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  uploadedById String
+  uploadedBy   User   @relation(fields: [uploadedById], references: [id])
+
+  fileName    String
+  fileUrl     String
+  fileType    String
+  fileSize    Int
+  description String?
+
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@index([uploadedById])
+}
+
+model WorkLog {
+  id     String @id @default(uuid())
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  activity String
+  progress Int?
+  blocker  String?
+
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@index([userId])
+}
+
+model Meeting {
+  id          String  @id @default(uuid())
+  title       String
+  description String?
+  startAt     DateTime
+  endAt       DateTime
+  meetingUrl  String?
+
+  createdById String
+  createdBy   User   @relation("MeetingCreator", fields: [createdById], references: [id])
+
+  participants MeetingParticipant[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([createdById])
+  @@index([startAt])
+}
+
+model MeetingParticipant {
+  id        String @id @default(uuid())
+  meetingId String
+  meeting   Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([meetingId, userId])
+  @@index([meetingId])
+  @@index([userId])
+}
+
+// Corporate Calendar (Modul 6.2). Meeting (6.1) TIDAK disalin ke sini —
+// CalendarEvent hanya menyimpan event non-meeting; timeline gabungan
+// (Meeting + CalendarEvent) dirakit di calendar.service saat query.
+model CalendarEvent {
+  id          String            @id @default(uuid())
+  title       String
+  description String?
+  type        CalendarEventType
+
+  startAt DateTime
+  endAt   DateTime
+
+  createdById String
+  createdBy   User   @relation("CalendarEventCreator", fields: [createdById], references: [id])
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([createdById])
+  @@index([startAt])
+  @@index([type])
+}
+
+model WorkSession {
+  id     String @id @default(uuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  startedAt       DateTime
+  endedAt         DateTime?
+  durationMinutes Int?
+
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model TaskReview {
+  id     String @id @default(uuid())
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  reviewerId String
+  reviewer   User   @relation(fields: [reviewerId], references: [id])
+
+  decision ReviewDecision
+  note     String
+
+  createdAt DateTime @default(now())
+
+  @@index([taskId])
+  @@index([reviewerId])
 }
 
 model TaskComment {

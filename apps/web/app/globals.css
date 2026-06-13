@@ -1,10 +1,11 @@
 @import "tailwindcss";
 
 /*
- * AWOS enterprise theme (light only — internal operational software).
- * Palette: Indigo 600 primary, Slate 50 bg, white cards, Slate text.
- * shadcn/ui token names are mapped to CSS vars via @theme inline so utilities
- * like bg-primary / bg-card / border-input resolve correctly in Tailwind v4.
+ * AWOS DESIGN SYSTEM — "Aurora" (clean enterprise SaaS)
+ * Kanvas slate sejuk, kartu putih hairline + shadow lembut, brand biru-indigo.
+ * Source of truth: apps/web/CLAUDE.md.
+ * - Display: Sora · Body: Plus Jakarta Sans · Data: JetBrains Mono
+ * Token shadcn dipetakan ke CSS var via @theme inline (Tailwind v4).
  */
 @theme inline {
   --color-background: var(--background);
@@ -27,19 +28,42 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* Sidebar — kini terang (token dipertahankan utk kompatibilitas) */
+  --color-ink: var(--ink);
+  --color-ink-foreground: var(--ink-foreground);
+  --color-ink-muted: var(--ink-muted);
+
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-sora), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+  /* Aurora background (landing hero) */
+  --animate-aurora: aurora 60s linear infinite;
+}
+
+@keyframes aurora {
+  from {
+    background-position:
+      50% 50%,
+      50% 50%;
+  }
+  to {
+    background-position:
+      350% 50%,
+      350% 50%;
+  }
 }
 
 :root {
-  --radius: 0.625rem;
+  --radius: 0.65rem;
 
-  --background: #f8fafc; /* slate-50 */
-  --foreground: #0f172a; /* slate-900 */
+  --background: #f8fafc; /* slate-50 bersih */
+  --foreground: #0f172a; /* slate-900 (heading) */
 
   --card: #ffffff;
   --card-foreground: #0f172a;
@@ -47,32 +71,95 @@
   --popover: #ffffff;
   --popover-foreground: #0f172a;
 
-  --primary: #4f46e5; /* indigo-600 */
+  --primary: #1e3a8a; /* navy brand (tombol, aktif, progress) */
   --primary-foreground: #ffffff;
 
-  --secondary: #f1f5f9; /* slate-100 */
-  --secondary-foreground: #0f172a;
+  --secondary: #e1dfff; /* lavender-indigo (state aktif, badge) */
+  --secondary-foreground: #2c24ce; /* indigo-700 */
 
   --muted: #f1f5f9; /* slate-100 */
   --muted-foreground: #64748b; /* slate-500 */
 
-  --accent: #eef2ff; /* indigo-50 */
-  --accent-foreground: #3730a3; /* indigo-800 */
+  --accent: #eef2ff; /* indigo-50 (hover lembut) */
+  --accent-foreground: #312e81; /* indigo-900 */
 
   --destructive: #dc2626; /* red-600 */
   --destructive-foreground: #ffffff;
 
-  --border: #e2e8f0; /* slate-200 */
-  --input: #e2e8f0; /* slate-200 */
-  --ring: #4f46e5; /* indigo-600 */
+  --border: #e2e8f0; /* slate-200 hairline */
+  --input: #cbd5e1; /* slate-300 */
+  --ring: #1e3a8a;
+
+  /* sidebar (light) helper tones */
+  --ink: #0f172a;
+  --ink-foreground: #e2e8f0;
+  --ink-muted: #94a3b8;
+
+  /* glow + sparkles (landing) — navy AWOS, bukan ungu */
+  --gradient-color: #1e3a8a;
+  --sparkles-color: #1e3a8a;
 }
 
 * {
   border-color: var(--color-border);
 }
 
+html {
+  -webkit-font-smoothing: antialiased;
+}
+
 body {
-  background: var(--color-background);
+  background-color: var(--color-background);
   color: var(--color-foreground);
   font-family: var(--font-sans);
+}
+
+::selection {
+  background: color-mix(in oklab, var(--primary) 18%, transparent);
+  color: var(--foreground);
+}
+
+/* Angka tabular di mana pun font-mono dipakai */
+.font-mono {
+  font-feature-settings: "tnum" 1;
+}
+
+/* ── Motion: reveal bertahap saat page-load ───────────────── */
+@keyframes aurora-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.dash-stagger > * {
+  animation: aurora-rise 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.dash-stagger > *:nth-child(1) {
+  animation-delay: 0.02s;
+}
+.dash-stagger > *:nth-child(2) {
+  animation-delay: 0.08s;
+}
+.dash-stagger > *:nth-child(3) {
+  animation-delay: 0.14s;
+}
+.dash-stagger > *:nth-child(4) {
+  animation-delay: 0.2s;
+}
+.dash-stagger > *:nth-child(5) {
+  animation-delay: 0.26s;
+}
+.dash-stagger > *:nth-child(6) {
+  animation-delay: 0.32s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dash-stagger > * {
+    animation: none;
+  }
 }

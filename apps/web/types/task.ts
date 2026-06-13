@@ -22,6 +22,8 @@ export interface Task {
   dueDate: string | null;
   assignedToId: string | null;
   createdById: string;
+  completionNote: string | null;
+  completedAt: string | null;
   assignedTo: TaskUserRef | null;
   createdBy: TaskUserRef;
   createdAt: string;

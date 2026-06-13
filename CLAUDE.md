@@ -137,29 +137,128 @@ Agent WAJIB memverifikasi implementasi aktual sebelum mengubah modul.
 
 ✅ Department Management UI
 
+✅ Operational Dashboard UI
+
+---
+
+## Work Evidence System ✅ COMPLETED (Modul 5.0)
+
+- Prisma: model `TaskEvidence` (taskId, uploadedById, fileName, fileUrl, fileType, fileSize, description, createdAt) + index `taskId`/`uploadedById`
+- Task: `completionNote`, `completedAt`, relasi `evidences[]`
+- Backend module `task-evidence/`: upload, list, delete evidence + update completion note
+- Endpoints: `POST/GET/DELETE /api/tasks/:taskId/evidence`, `PATCH /api/tasks/:taskId/completion-note`
+- Local storage `uploads/task-evidence/` (disajikan statis di `/uploads`)
+- Authorization: EMPLOYEE (task miliknya), MANAGER (view), ADMIN/SUPER_ADMIN (full); delete = uploader/admin
+- Frontend: section Work Evidence di Task Detail (upload, completion note, evidence list)
+- Menjadi fondasi data untuk: Daily Work Log → Manager Review → KPI Engine → AI Evaluation
+
+---
+
+## Daily Work Log System ✅ COMPLETED (Modul 5.1)
+
+- Prisma: model `WorkLog` (taskId, userId, activity, progress, blocker, createdAt) + index `taskId`/`userId`; Task relasi `workLogs[]`
+- Backend module `work-logs/`: create, list, delete work log
+- Endpoints: `POST/GET /api/tasks/:taskId/work-logs`, `DELETE /api/tasks/:taskId/work-logs/:id`
+- Validasi: activity min 10 char, progress 0–100, blocker opsional
+- Aturan tambahan: jika progress terakhir 100% → tidak bisa menambah log (backend 409 + form terkunci di UI)
+- Authorization: catat/hapus = assignee/admin (manager view); list = akses task
+- Realtime: event `worklog:new`
+- Frontend: section Work Progress Timeline (activity feed, jam menonjol) di atas Evidence
+
+---
+
+## Manager Review System ✅ COMPLETED (Modul 5.2)
+
+- Prisma: enum `ReviewDecision` (APPROVED/REVISION), model `TaskReview` (taskId, reviewerId, decision, note, createdAt) + index; Task `reviews[]`, `submittedForReviewAt`
+- Backend module `task-reviews/`: submit-review, create review, review history
+- Endpoints: `POST /api/tasks/:taskId/submit-review`, `POST/GET /api/tasks/:taskId/reviews`
+- Logika status: submit → REVIEW; APPROVED → DONE; REVISION → IN_PROGRESS (review selalu insert, history tak ditimpa)
+- Authorization: submit = assignee/admin; create review = MANAGER/ADMIN/SUPER_ADMIN
+- Realtime: event `review:created`; Notification: "Task Review" (approved/revision)
+- Frontend: section Manager Review (form keputusan, status badge, review history)
+
+---
+
+## Workforce Session Tracking ✅ COMPLETED (Modul 5.3)
+
+- Prisma: model `WorkSession` (userId, startedAt, endedAt, durationMinutes, createdAt) + index `userId`; User `workSessions[]`
+- Backend module `work-sessions/`: start, end, me, team (tanpa DTO — start/end tanpa body)
+- Endpoints: `POST /api/work-sessions/start|end`, `GET /api/work-sessions/me|team`
+- Aturan: 1 sesi aktif per user (start ditolak 409 bila aktif); durationMinutes dihitung otomatis saat end
+- Authorization: start/end/me = user sendiri; team = MANAGER/ADMIN/SUPER_ADMIN
+- Realtime: broadcast `session:started` / `session:ended` (presence)
+- Frontend: Session Status Card (Start/End Working + durasi hidup) & Team Activity Widget (presence realtime) di dashboard
+- BUKAN attendance/GPS/screenshot/keystroke — murni accountability presence
+
+---
+
+## KPI Foundation ✅ COMPLETED (Modul 5.4)
+
+- KPI dihitung DINAMIS dari data operasional (Task, Work Log, Evidence, Review, Session) — tanpa tabel/score tersimpan
+- Backend module `kpi/`: `kpi.service.ts` (computeKpiMap, 3 query + agregasi in-memory, no N+1), controller, module
+- Endpoints: `GET /api/kpi/me`, `GET /api/kpi/users/:id` (MANAGER+), `GET /api/kpi/team` (MANAGER+)
+- 6 metrik: completionRate, approvalRate, revisionRate, evidenceCompliance, workLogConsistency, sessionConsistency
+- Status: EXCELLENT (≥85) / GOOD (≥70) / NEEDS_ATTENTION (<70) — angka overall internal, tidak ditampilkan
+- Frontend: My Performance card (dashboard employee), Team Performance table (dashboard manager/admin)
+- **Phase 5 (Workforce Accountability) SELESAI** → membuka Phase 6 (Collaboration)
+
+---
+
+## Kanban Workspace ✅ COMPLETED (Modul 6.0)
+
+- Frontend-only (TANPA model/endpoint baru) — reuse Task PATCH status + realtime `task:updated`
+- Route `/kanban`: 4 kolom (TODO, IN_PROGRESS, REVIEW, DONE) drag-and-drop via `@dnd-kit/core`
+- Pindah kartu → `PATCH /api/tasks/:id` (status); optimistic update + invalidate
+- Sidebar: menu Kanban
+- BUKAN board kompleks (tanpa swimlane/WIP-limit/kustomisasi kolom) — fondasi data status task untuk AI
+
+---
+
+## Meeting Scheduler ✅ COMPLETED (Modul 6.1)
+
+- Prisma: model `Meeting` (title, description?, startAt, endAt, meetingUrl?, createdById) + `MeetingParticipant` (unique [meetingId,userId]); User `createdMeetings[]`/`meetingParticipations[]`
+- Backend module `meetings/`: CRUD + `today`, pagination, search, filter date
+- Endpoints: `POST/GET /api/meetings`, `GET /api/meetings/today`, `GET/PATCH/DELETE /api/meetings/:id`
+- Authorization: CREATE/UPDATE = MANAGER(pembuat)/ADMIN/SUPER_ADMIN; DELETE = ADMIN/SUPER_ADMIN; VIEW = peserta/pembuat/privileged
+- Realtime: `meeting:created/updated/deleted` (room peserta+pembuat); Notification: "Meeting Scheduled"/"Meeting Updated"
+- Frontend: list `/meetings` + `/meetings/new` + `/meetings/[id]` (Join Meeting eksternal), Today's Meetings widget di dashboard, sidebar Meetings
+- BUKAN video conference / reminder terjadwal (video tetap di platform eksternal via meetingUrl)
+
+---
+
+## Corporate Calendar ✅ COMPLETED (Modul 6.2)
+
+- Prisma: enum `CalendarEventType` (MEETING, COMPANY_EVENT, TRAINING, HOLIDAY, DIRECTOR_SCHEDULE, ANNOUNCEMENT), model `CalendarEvent` (title, description?, type, startAt, endAt, createdById); User `createdCalendarEvents[]`
+- Backend module `calendar/`: CRUD event + timeline gabungan
+- Endpoints: `POST/GET /api/calendar/events`, `GET/PATCH/DELETE /api/calendar/events/:id`, `GET /api/calendar/month`, `GET /api/calendar/upcoming`
+- **Meeting integration:** Meeting (6.1) TIDAK disalin — `/month` & `/upcoming` MENGGABUNGKAN Meeting (read-only, source-of-truth) + CalendarEvent jadi satu timeline (`CalendarItem` dengan `source: MEETING|EVENT`)
+- Authorization: CREATE/UPDATE = MANAGER(pembuat)/ADMIN/SUPER_ADMIN; DELETE = ADMIN/SUPER_ADMIN; VIEW = semua user login. Meeting dalam merge tetap mengikuti scope visibilitas 6.1 (employee hanya meeting yang melibatkannya); CalendarEvent perusahaan-wide
+- Realtime: broadcast `calendar:event-created/updated/deleted`; Notification: "New Calendar Event"/"Calendar Event Updated" ke seluruh user aktif
+- Frontend: `/calendar` Month View (grid 6×7, navigasi bulan, chip berwarna per tipe, detail dialog), Create Event dialog (privileged), Upcoming Events widget (maks 5) di dashboard, sidebar Calendar
+- BUKAN sync Google/Outlook, ICS, recurring engine, reminder scheduler, atau calendar AI
+
 ---
 
 ## Current Active Development
 
-🚧 Work Evidence System
+🚧 Office Feed (Modul 6.3) — Phase 6: Workforce Collaboration (modul terakhir Phase 6)
 
 ---
 
 ## Locked Modules
 
-🔒 Daily Work Log
+### Phase 6 — Workforce Collaboration
+🔒 Office Feed (6.3) — berikutnya
 
-🔒 Manager Review
+### Phase 7 — Workforce Intelligence (AI — LOCKED KERAS)
+🔒 AI Report Evaluation (7.0)
+🔒 Manager Copilot (7.1)
+🔒 Workforce Intelligence (7.2)
+🔒 AI KPI Recommendation (7.3)
 
-🔒 Workforce Session Tracking
-
-🔒 KPI Engine
-
-🔒 AI Evaluation
-
-🔒 Manager Copilot
-
-🔒 AI Workforce Intelligence
+> AI (Phase 7) DILARANG dibangun sebelum SELURUH dependency tersedia:
+> ✅ Task, Work Log, Evidence, Review, Session, KPI, Kanban, Meeting, Calendar · ⏳ Office Feed.
+> Status dependency: 9/10. Selesaikan Office Feed (6.3) dulu.
 
 ## 2. PRODUCT IDENTITY
 
@@ -222,18 +321,23 @@ Jika **lebih dari satu jawaban NO** → jangan implementasi, laporkan ke user te
 > Bagian ini hanya ringkasan cepat untuk referensi agent.
 
 ### Phase yang sedang aktif:
-**Phase 5 — Work Evidence & Performance Foundation**
+**Phase 6 — Workforce Collaboration**
 
-### Modul aktif di Phase 5:
-1. Work Evidence System
-2. Daily Work Log System
-3. Manager Review System
-4. Workforce Session Tracking
-5. KPI Engine
+### Status phase:
+- ✅ **Phase 5 — Workforce Accountability** SELESAI (5.0 Work Evidence, 5.1 Daily Work Log, 5.2 Manager Review, 5.3 Workforce Session Tracking, 5.4 KPI Foundation)
+- 🚧 **Phase 6 — Workforce Collaboration** (AKTIF): 6.0 Kanban ✅, 6.1 Meeting Scheduler ✅, 6.2 Corporate Calendar ✅, 6.3 Office Feed (current)
+- ⏳ **Phase 7 — Workforce Intelligence** (AI, LOCKED): 7.0 AI Report Evaluation, 7.1 Manager Copilot, 7.2 Workforce Intelligence, 7.3 AI KPI Recommendation
+
+### Modul aktif di Phase 6:
+1. Kanban Workspace (6.0) — ✅ selesai
+2. Meeting Scheduler (6.1) — ✅ selesai
+3. Corporate Calendar (6.2) — ✅ selesai
+4. Office Feed (6.3) — 🚧 current
 
 ### Aturan phase:
 - ❌ DILARANG mengerjakan modul di luar scope phase aktif
-- ❌ DILARANG memulai Phase 6+ sebelum semua item Phase 5 selesai
+- ❌ DILARANG memulai Phase 7 (AI) sebelum semua item Phase 6 selesai
+- ❌ AI Evaluation DILARANG dibangun sebelum SELURUH dependency tersedia (lihat seksi 7)
 - ✅ Boleh memperbaiki bug atau refactor modul dari phase sebelumnya
 - ✅ Boleh menambah test coverage modul yang sudah selesai
 
@@ -306,28 +410,33 @@ Jika **lebih dari satu jawaban NO** → jangan implementasi, laporkan ke user te
 
 > Urutkan pengerjaan sesuai `docs/ROADMAP.md`. Jangan loncat urutan.
 
-### 🚧 Phase 5 — Sedang Dikerjakan:
+### ✅ Phase 5 — Workforce Accountability (SELESAI):
 
 | Modul | Status | Dependency |
 |-------|--------|------------|
-| Work Evidence System | Belum dimulai | Task Management ✅ |
-| Daily Work Log System | Belum dimulai | Task Management ✅ |
-| Manager Review System | Belum dimulai | Work Evidence, Work Log |
-| Workforce Session Tracking | Belum dimulai | User Management ✅ |
-| KPI Engine | Belum dimulai | Task Management ✅, Work Log |
-Notification System✅
+| Work Evidence System | ✅ SELESAI (5.0) | Task Management ✅ |
+| Daily Work Log System | ✅ SELESAI (5.1) | Task ✅, Work Evidence ✅ |
+| Manager Review System | ✅ SELESAI (5.2) | Work Evidence ✅, Work Log ✅ |
+| Workforce Session Tracking | ✅ SELESAI (5.3) | User Management ✅ |
+| KPI Foundation | ✅ SELESAI (5.4) | Task ✅, Work Log ✅, Review ✅, Session ✅ |
 
-### 🔒 Phase 6+ — LOCKED (Jangan dikerjakan dulu):
+### 🚧 Phase 6 — Workforce Collaboration (AKTIF):
+
+| Modul | Status | Dependency |
+|-------|--------|------------|
+| Kanban Workspace | ✅ SELESAI (6.0) | Task ✅ |
+| Meeting Scheduler | ✅ SELESAI (6.1) | User ✅ |
+| Corporate Calendar | ✅ SELESAI (6.2) | User ✅, Meeting ✅ |
+| Office Feed | 🚧 Sedang dikerjakan (6.3) | User ✅ |
+
+### 🔒 Phase 7 — Workforce Intelligence (AI — LOCKED KERAS):
 
 | Modul | Keterangan |
 |-------|-----------|
-| Analytics Dashboard | Butuh data dari KPI Engine |
-| Workflow Automation | Butuh Analytics |
-| Async Reporting | Butuh Analytics + Workflow |
-| Knowledge Base (RAG) | Butuh semua foundation |
-| **AI Workspace** | **🔒 LOCKED KERAS — baca seksi 7** |
-| **AI Agents** | **🔒 LOCKED KERAS — baca seksi 7** |
-| **Manager Copilot** | **🔒 LOCKED KERAS — baca seksi 7** |
+| AI Report Evaluation (7.0) | Butuh SELURUH Phase 5 ✅ + Phase 6 ⏳ |
+| Manager Copilot (7.1) | Butuh AI Report Evaluation |
+| Workforce Intelligence (7.2) | Butuh seluruh data + AI Evaluation |
+| AI KPI Recommendation (7.3) | Butuh KPI ✅ + AI Evaluation |
 
 ---
 
@@ -347,16 +456,21 @@ Notification System✅
 ### AI TIDAK BOLEH dibangun sebelum data berikut tersedia:
 
 ```
-REQUIRED DATA DEPENDENCY untuk AI Evaluation:
+REQUIRED DATA DEPENDENCY untuk AI Evaluation (Phase 7):
 
-[1] Task data          → Task Management ✅ DONE
-[2] Work Evidence      → Evidence System ❌ BELUM ADA
-[3] Work Log           → Work Log System ❌ BELUM ADA
-[4] Manager Review     → Review System   ❌ BELUM ADA
-[5] KPI Records        → KPI Engine      ❌ BELUM ADA
+[1]  Task data          → Task Management    ✅ DONE
+[2]  Work Log           → Work Log System     ✅ DONE (5.1)
+[3]  Work Evidence      → Evidence System     ✅ DONE (5.0)
+[4]  Manager Review     → Review System       ✅ DONE (5.2)
+[5]  Work Session       → Session Tracking    ✅ DONE (5.3)
+[6]  KPI Records        → KPI Foundation      ✅ DONE (5.4)
+[7]  Kanban             → Kanban Workspace    ✅ DONE (6.0)
+[8]  Meeting            → Meeting Scheduler   ✅ DONE (6.1)
+[9]  Calendar          → Corporate Calendar  ✅ DONE (6.2)
+[10] Office Feed        → Office Feed         ⏳ Phase 6 (6.3)
 
-Status: 1/5 dependency terpenuhi
-→ AI Evaluation DILARANG diimplementasi sampai semua ✅
+Status: 9/10 dependency terpenuhi
+→ AI (Phase 7) DILARANG diimplementasi sampai SELURUH dependency Phase 6 tersedia
 ```
 
 ### Konsekuensi melanggar aturan ini:
@@ -937,10 +1051,20 @@ Sebelum menginstall library baru:
 
 ---
 
-*Dokumen ini wajib diupdate setiap kali:*
-- *Modul baru selesai diimplementasi*
-- *Ada keputusan arsitektur baru*
-- *Phase roadmap berubah*
-- *Tech stack berubah*
+# DOCUMENTATION UPDATE RULE
+
+Setelah modul selesai:
+
+Agent WAJIB:
+
+1. Update ROADMAP.md
+2. Update CLAUDE.md
+3. Menambahkan modul ke Completed Modules
+4. Menjelaskan dependency berikutnya
+
+Modul belum dianggap selesai
+sampai dokumentasi diperbarui
 
 *Update terakhir wajib mencantumkan tanggal dan modul yang berubah.*
+
+**Update terakhir: 2026-06-11 — Modul 6.2 Corporate Calendar SELESAI** (juga menandai 6.0 Kanban & 6.1 Meeting sebagai SELESAI yang sebelumnya belum tercatat). Dependency AI kini 9/10 — tersisa Office Feed (6.3).

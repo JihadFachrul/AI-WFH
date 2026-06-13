@@ -474,162 +474,88 @@ JANGAN membuat UI yang terlalu ramai.
 
 ---
 
-# Color System
+# Design System — "Aurora" (clean enterprise SaaS)
 
-## Primary Color
+Identitas visual AWOS: **SaaS modern yang bersih & terpercaya** — kanvas slate
+sejuk, kartu putih dengan hairline + shadow lembut, brand biru-indigo yang
+percaya diri. Profesional, lega, data-first, nyaman dipakai berjam-jam.
 
-Gunakan:
-
-Indigo
-
-Tailwind:
-
-indigo-600
-
-Contoh:
-
-* tombol utama
-* active navigation
-* selected state
-* focus state
+Token diatur di `app/globals.css` (Tailwind v4 `@theme` + CSS vars). SELALU
+gunakan token semantik (`bg-primary`, `bg-card`, `border-border`,
+`text-muted-foreground`, dll). JANGAN hardcode hex / warna tailwind mentah
+untuk elemen utama.
 
 ---
 
-## Secondary Color
+# Color System (slate bersih + navy + lavender-indigo)
 
-Slate
+## Primary — Navy
 
-Tailwind:
+`--primary: #1e3a8a`
 
-slate-700
-slate-800
-slate-900
+Untuk: tombol utama, active accent bar, progress fill, focus ring, logo.
 
-Digunakan untuk:
+## Background & Surface
 
-* sidebar
-* typography
-* dashboard shell
+* `--background: #f8fafc` (slate-50 bersih, FLAT — tanpa gradient/glow)
+* `--card: #ffffff` (kartu putih bersih, `border-border` + `shadow-sm`)
+* `--border: #e2e8f0` (slate-200 hairline)
 
----
+## Sidebar — terang
 
-## Success
+* Sidebar **terang** (`bg-card` + `border-r`), BUKAN gelap.
+* Item aktif: `bg-secondary text-secondary-foreground` (pil lavender) + garis
+  kiri navy `bg-primary`.
+* Token `--ink*` dipertahankan utk kompatibilitas, tapi tidak lagi dipakai
+  sebagai background sidebar.
 
-green-600
+## Muted / Secondary / Accent
 
-Untuk:
+* `--muted: #f1f5f9` (slate-100), `--muted-foreground: #64748b` (slate-500).
+* `--secondary: #e1dfff` / `--secondary-foreground: #2c24ce` — lavender-indigo
+  untuk state aktif & badge.
+* `--accent: #eef2ff` (indigo-50) untuk hover lembut.
 
-* task completed
-* success state
+## Status (semantik)
 
----
-
-## Warning
-
-amber-500
-
-Untuk:
-
-* review state
-* warning state
-
----
-
-## Danger
-
-red-600
-
-Untuk:
-
-* delete
-* critical task
-* destructive action
-
----
-
-## Information
-
-blue-500
-
-Untuk:
-
-* informational notification
-* help state
-
----
-
-# Background System
-
-Main background:
-
-slate-50
-
-Card background:
-
-white
-
-Sidebar:
-
-slate-900
-
-Header:
-
-white
-
-Border:
-
-slate-200
+* Success → emerald (task done)
+* Warning → amber (review)
+* Danger → `--destructive: #dc2626` (delete/critical)
 
 ---
 
 # Dark Mode
 
-WAJIB support dark mode.
-
-Dark theme:
-
-Background:
-slate-950
-
-Card:
-slate-900
-
-Border:
-slate-800
-
-Text:
-slate-100
-
-Primary:
-indigo-500
-
-JANGAN membuat dark mode neon.
+Tema saat ini **light-only (Aurora)**. Dark mode di-DEFER (belum
+diimplementasi). Jika nanti dibangun: arah "cool dark" (slate-900 + biru),
+BUKAN neon / glassmorphism.
 
 ---
 
 # Typography
 
-Gunakan:
+Sistem 3 tingkat (di-load via `next/font` di `app/layout.tsx`):
 
-Inter
+* **Display — Sora** (`font-display`): judul halaman, CardTitle, angka
+  statistik besar. Geometric grotesk modern, berkarakter SaaS.
+* **Body/UI — Plus Jakarta Sans** (`font-sans`, default): seluruh teks UI.
+  Bersih, modern, mudah dibaca. (BUKAN Inter.)
+* **Data — JetBrains Mono** (`font-mono`): angka KPI, count, timestamp,
+  jam timeline; pakai `tabular-nums`.
 
-Fallback:
+JANGAN kembali ke Inter/Roboto/Arial sebagai font utama.
 
-system-ui
+---
 
-Font weight:
+# Motion & Texture
 
-400
-500
-600
-
-JANGAN:
-
-* Poppins
-* Orbitron
-* Montserrat untuk seluruh aplikasi
-
-AWOS adalah tool kerja.
+* **Tarikan cahaya indigo lembut** pada `body` (di globals.css) untuk atmosfer
+  SaaS — sangat halus, bukan glassmorphism / gradient norak.
+* **Reveal bertahap** saat page-load: bungkus grid dashboard dengan
+  class `dash-stagger` (animasi `aurora-rise`, hormati
+  `prefers-reduced-motion`). Satu momen reveal terkurasi.
+* **Soft shadow + hairline border** untuk kartu (`shadow-sm`, hover `shadow-md`),
+  bukan ring tebal.
 
 ---
 
@@ -662,17 +588,22 @@ Sidebar harus:
 Menu:
 
 * Dashboard
+* Kanban
 * Tasks
+* Meetings
+* Calendar
 * Notifications
 * Departments
 * Users
 
 Active menu:
 
-* indigo highlight
-* subtle background
+* accent bar biru (garis kiri) + `bg-primary/10 text-primary`
+* sidebar = terang (`bg-card` + `border-r border-border`)
 
-JANGAN gunakan gradient.
+Top bar: search ("Cari di AWOS…") + notifikasi + profil (nama + role).
+
+JANGAN gunakan gradient norak.
 
 ---
 
@@ -695,7 +626,7 @@ JANGAN:
 
 Primary:
 
-indigo
+biru-indigo (`bg-primary`)
 
 Secondary:
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { LogOutIcon } from "lucide-react";
+import { LogOutIcon, SearchIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,9 +39,15 @@ export function Header() {
   };
 
   return (
-    <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4 md:px-6">
-      <div className="text-sm font-medium text-muted-foreground">
-        Workspace
+    <header className="flex h-16 shrink-0 items-center justify-between gap-4 border-b border-border bg-card/80 px-4 backdrop-blur-sm md:px-6">
+      <div className="flex max-w-sm flex-1 items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5 text-muted-foreground focus-within:border-primary/40 focus-within:bg-card">
+        <SearchIcon className="size-4 shrink-0" />
+        <input
+          type="search"
+          placeholder="Cari di AWOS…"
+          className="w-full bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+          aria-label="Cari"
+        />
       </div>
 
       <div className="flex items-center gap-1">
@@ -49,12 +55,17 @@ export function Header() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="gap-2 px-2">
-              <span className="flex size-7 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+            <Button variant="ghost" className="h-auto gap-2.5 px-2 py-1.5">
+              <span className="flex size-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
                 {user ? initials(user.name) : "?"}
               </span>
-              <span className="hidden text-sm font-medium sm:inline">
-                {user?.name ?? "User"}
+              <span className="hidden flex-col items-start leading-tight sm:flex">
+                <span className="text-sm font-semibold text-foreground">
+                  {user?.name ?? "User"}
+                </span>
+                <span className="text-[11px] font-medium text-muted-foreground">
+                  {user?.role ?? "—"}
+                </span>
               </span>
             </Button>
           </DropdownMenuTrigger>

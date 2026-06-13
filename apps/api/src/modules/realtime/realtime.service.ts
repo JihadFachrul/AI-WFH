@@ -26,6 +26,43 @@ export interface RealtimeComment {
   createdAt: Date;
 }
 
+export interface RealtimeWorkLog {
+  id: string;
+  taskId: string;
+  userId: string;
+  activity: string;
+  progress: number | null;
+  createdAt: Date;
+}
+
+export interface RealtimeReview {
+  id: string;
+  taskId: string;
+  decision: string;
+  note: string;
+  createdAt: Date;
+}
+
+export interface RealtimeSession {
+  userId: string;
+  sessionId: string;
+  startedAt?: Date;
+  durationMinutes?: number | null;
+}
+
+export interface RealtimeMeeting {
+  id: string;
+  title: string;
+  startAt: Date;
+}
+
+export interface RealtimeCalendarEvent {
+  id: string;
+  title: string;
+  type: string;
+  startAt: Date;
+}
+
 /** Format room per-user yang konsisten dipakai seluruh aplikasi. */
 export function userRoom(userId: string): string {
   return `user:${userId}`;
@@ -121,5 +158,57 @@ export class RealtimeService {
 
   emitTaskComment(userIds: string[], comment: RealtimeComment): void {
     this.emitToUsers(userIds, 'task:comment', comment);
+  }
+
+  emitWorkLog(userIds: string[], workLog: RealtimeWorkLog): void {
+    this.emitToUsers(userIds, 'worklog:new', workLog);
+  }
+
+  emitReview(userIds: string[], review: RealtimeReview): void {
+    this.emitToUsers(userIds, 'review:created', review);
+  }
+
+  /** Broadcast ke seluruh client (dipakai presence team activity). */
+  broadcast(event: string, payload: unknown): void {
+    if (!this.server) {
+      this.logger.warn(`Server belum siap; lewati broadcast "${event}"`);
+      return;
+    }
+    this.server.emit(event, payload);
+  }
+
+  emitSessionStarted(session: RealtimeSession): void {
+    this.broadcast('session:started', session);
+  }
+
+  emitSessionEnded(session: RealtimeSession): void {
+    this.broadcast('session:ended', session);
+  }
+
+  emitMeetingCreated(userIds: string[], meeting: RealtimeMeeting): void {
+    this.emitToUsers(userIds, 'meeting:created', meeting);
+  }
+
+  emitMeetingUpdated(userIds: string[], meeting: RealtimeMeeting): void {
+    this.emitToUsers(userIds, 'meeting:updated', meeting);
+  }
+
+  emitMeetingDeleted(userIds: string[], meetingId: string): void {
+    this.emitToUsers(userIds, 'meeting:deleted', { id: meetingId });
+  }
+
+  // --- Calendar (6.2): event kalender bersifat perusahaan-wide,
+  // jadi di-broadcast ke seluruh client (bukan room per-user). ---
+
+  emitCalendarEventCreated(event: RealtimeCalendarEvent): void {
+    this.broadcast('calendar:event-created', event);
+  }
+
+  emitCalendarEventUpdated(event: RealtimeCalendarEvent): void {
+    this.broadcast('calendar:event-updated', event);
+  }
+
+  emitCalendarEventDeleted(eventId: string): void {
+    this.broadcast('calendar:event-deleted', { id: eventId });
   }
 }

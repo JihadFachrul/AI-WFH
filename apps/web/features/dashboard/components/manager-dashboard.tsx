@@ -10,6 +10,11 @@ import { StatCard } from "./stat-card";
 import { TasksByStatusWidget } from "./tasks-by-status-widget";
 import { DepartmentSummaryWidget } from "./department-summary-widget";
 import { ActivityWidget } from "./activity-widget";
+import { SessionStatusCard } from "@/features/work-sessions/components/session-status-card";
+import { TeamActivityWidget } from "@/features/work-sessions/components/team-activity-widget";
+import { TeamKpiTable } from "@/features/kpi/components/team-kpi-table";
+import { TodayMeetingsWidget } from "@/features/meetings/components/today-meetings-widget";
+import { UpcomingEventsWidget } from "@/features/calendar/components/upcoming-events-widget";
 
 export function ManagerDashboard() {
   // MANAGER (privileged) melihat seluruh task yang dapat diaksesnya.
@@ -21,7 +26,7 @@ export function ManagerDashboard() {
   const stats = useMemo(() => deriveTaskStats(tasks, Date.now()), [tasks]);
 
   return (
-    <div className="space-y-4">
+    <div className="dash-stagger space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <StatCard
           label="Team Tasks"
@@ -44,6 +49,11 @@ export function ManagerDashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <SessionStatusCard />
+        <TeamActivityWidget />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <TasksByStatusWidget
           byStatus={stats.byStatus}
           isLoading={tasksQ.isLoading}
@@ -56,6 +66,13 @@ export function ManagerDashboard() {
           isError={deptQ.isError}
         />
       </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <TodayMeetingsWidget />
+        <UpcomingEventsWidget />
+      </div>
+
+      <TeamKpiTable />
 
       <ActivityWidget
         notifications={activityQ.data?.data ?? []}

@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, UserRole } from '@prisma/client';
+import { Prisma, UserRole, TaskStatus, ReviewDecision } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   buildPaginationMeta,
@@ -27,6 +27,9 @@ const TASK_SELECT = {
   dueDate: true,
   assigneeId: true,
   creatorId: true,
+  completionNote: true,
+  completedAt: true,
+  submittedForReviewAt: true,
   createdAt: true,
   updatedAt: true,
   assignee: { select: { id: true, name: true, email: true } },
@@ -45,6 +48,9 @@ export interface TaskView {
   dueDate: Date | null;
   assignedToId: string | null;
   createdById: string;
+  completionNote: string | null;
+  completedAt: Date | null;
+  submittedForReviewAt: Date | null;
   assignedTo: TaskRow['assignee'];
   createdBy: TaskRow['creator'];
   createdAt: Date;
@@ -266,6 +272,65 @@ export class TasksService {
     return task;
   }
 
+  /**
+   * Update completion note (Work Evidence). Hanya yang boleh memodifikasi task
+   * (assignee atau privileged). completedAt diisi saat note non-kosong.
+   */
+  async setCompletionNote(
+    taskId: string,
+    note: string,
+    requester: AuthUser,
+  ): Promise<TaskView> {
+    const task = await this.loadActiveTask(taskId);
+    this.assertCanModify(task, requester);
+
+    const trimmed = note.trim();
+    const updated = await this.prisma.task.update({
+      where: { id: taskId },
+      data: {
+        completionNote: trimmed || null,
+        completedAt: trimmed ? new Date() : null,
+      },
+      select: TASK_SELECT,
+    });
+    return this.toTaskView(updated);
+  }
+
+  /**
+   * Employee submit task untuk direview → status REVIEW + submittedForReviewAt.
+   * Hanya assignee atau privileged (Manager Review, Modul 5.2).
+   */
+  async submitForReview(taskId: string, requester: AuthUser): Promise<TaskView> {
+    const task = await this.loadActiveTask(taskId);
+    this.assertCanModify(task, requester);
+
+    const updated = await this.prisma.task.update({
+      where: { id: taskId },
+      data: { status: TaskStatus.REVIEW, submittedForReviewAt: new Date() },
+      select: TASK_SELECT,
+    });
+    return this.toTaskView(updated);
+  }
+
+  /**
+   * Terapkan keputusan review ke status task: APPROVED → DONE, REVISION →
+   * IN_PROGRESS. Dipanggil TaskReviewsService setelah otorisasi manager.
+   */
+  async applyReviewDecision(
+    taskId: string,
+    decision: ReviewDecision,
+  ): Promise<void> {
+    const status =
+      decision === ReviewDecision.APPROVED
+        ? TaskStatus.DONE
+        : TaskStatus.IN_PROGRESS;
+    await this.prisma.task.update({
+      where: { id: taskId },
+      data: { status },
+      select: { id: true },
+    });
+  }
+
   // ============================================================
   // Helpers
   // ============================================================
@@ -362,6 +427,9 @@ export class TasksService {
       dueDate: task.dueDate,
       assignedToId: task.assigneeId,
       createdById: task.creatorId,
+      completionNote: task.completionNote,
+      completedAt: task.completedAt,
+      submittedForReviewAt: task.submittedForReviewAt,
       assignedTo: task.assignee,
       createdBy: task.creator,
       createdAt: task.createdAt,

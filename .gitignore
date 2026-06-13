@@ -5,3 +5,8 @@ dist
 .env.local
 coverage
 build
+# Work Evidence uploads (runtime, local storage)
+apps/api/uploads/
+uploads/
+module-5.0-evidence.png
+.playwright-mcp/

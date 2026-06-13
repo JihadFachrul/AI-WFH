@@ -17,12 +17,19 @@ import {
   type TaskFormSubmit,
 } from "@/features/tasks/components/task-form";
 import { CommentSection } from "@/features/tasks/components/comment-section";
+import { WorkLogTimeline } from "@/features/tasks/components/work-log-timeline";
+import { ReviewForm } from "@/features/tasks/components/review-form";
+import { ReviewHistory } from "@/features/tasks/components/review-history";
+import { EvidenceUpload } from "@/features/tasks/components/evidence-upload";
+import { EvidenceList } from "@/features/tasks/components/evidence-list";
+import { CompletionNote } from "@/features/tasks/components/completion-note";
 import { useTask } from "@/hooks/use-task";
 import { useUpdateTask } from "@/hooks/use-task-mutations";
+import { useTaskReviews, useSubmitReview } from "@/hooks/use-task-reviews";
 import { useUsers } from "@/hooks/use-users";
 import { useTaskRealtime } from "@/hooks/use-task-realtime";
 import { useAuthStore } from "@/stores/auth.store";
-import { isPrivileged } from "@/lib/roles";
+import { isPrivileged, isAdmin } from "@/lib/roles";
 
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -44,7 +51,9 @@ export default function TaskDetailPage() {
 
   const { data: task, isLoading, isError, refetch } = useTask(id);
   const { data: usersData } = useUsers({ page: 1, limit: 100 });
+  const { data: reviews } = useTaskReviews(id);
   const updateTask = useUpdateTask(id);
+  const submitReview = useSubmitReview(id);
   const [editing, setEditing] = useState(false);
 
   if (isLoading) return <LoadingState label="Memuat task…" />;
@@ -57,6 +66,23 @@ export default function TaskDetailPage() {
     );
 
   const canEdit = canAssign || task.assignedToId === currentUserId;
+  // Evidence & completion note: pemilik task (assignee) atau admin (spec).
+  const canContribute = isAdmin(role) || task.assignedToId === currentUserId;
+
+  // Manager Review: hanya MANAGER/ADMIN/SUPER_ADMIN yang boleh mereview.
+  const canReview = canAssign;
+  // Submit untuk review: assignee/admin, saat task belum REVIEW/DONE.
+  const canSubmitForReview =
+    canContribute && (task.status === "TODO" || task.status === "IN_PROGRESS");
+  const latestReview = reviews?.[0];
+  const reviewBadge =
+    task.status === "REVIEW"
+      ? { label: "Menunggu Review", cls: "bg-amber-100 text-amber-700" }
+      : latestReview?.decision === "APPROVED"
+        ? { label: "Disetujui", cls: "bg-emerald-100 text-emerald-700" }
+        : latestReview?.decision === "REVISION"
+          ? { label: "Perlu Revisi", cls: "bg-amber-100 text-amber-700" }
+          : { label: "Belum disubmit", cls: "bg-slate-100 text-slate-600" };
 
   const formUsers = canAssign
     ? (usersData?.data ?? []).map((u) => ({ id: u.id, name: u.name }))
@@ -162,6 +188,84 @@ export default function TaskDetailPage() {
               </div>
             </div>
           )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle>Work Progress Timeline</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <WorkLogTimeline
+            taskId={id}
+            currentUserId={currentUserId}
+            isAdmin={isAdmin(role)}
+            canContribute={canContribute}
+          />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle>Work Evidence</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <CompletionNote
+            taskId={id}
+            initialNote={task.completionNote}
+            completedAt={task.completedAt}
+            canEdit={canContribute}
+          />
+
+          {canContribute && (
+            <div>
+              <h3 className="mb-2 text-sm font-semibold">Upload Evidence</h3>
+              <EvidenceUpload taskId={id} />
+            </div>
+          )}
+
+          <div>
+            <h3 className="mb-2 text-sm font-semibold">Evidence</h3>
+            <EvidenceList
+              taskId={id}
+              currentUserId={currentUserId}
+              isAdmin={isAdmin(role)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="flex-row items-center justify-between border-b">
+          <CardTitle>Manager Review</CardTitle>
+          <span
+            className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${reviewBadge.cls}`}
+          >
+            {reviewBadge.label}
+          </span>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          {canSubmitForReview && (
+            <div className="flex items-center gap-3">
+              <Button
+                size="sm"
+                onClick={() => submitReview.mutate()}
+                disabled={submitReview.isPending}
+              >
+                {submitReview.isPending ? "Mengirim…" : "Submit for Review"}
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                Kirim task ini ke manager untuk direview.
+              </span>
+            </div>
+          )}
+
+          {canReview && <ReviewForm taskId={id} />}
+
+          <ReviewHistory
+            taskId={id}
+            audience={canReview ? "reviewer" : "employee"}
+          />
         </CardContent>
       </Card>
 

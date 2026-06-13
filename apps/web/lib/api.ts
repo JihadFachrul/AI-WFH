@@ -10,10 +10,9 @@ import { useAuthStore } from "@/stores/auth.store";
 const baseURL =
   process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api";
 
-export const api = axios.create({
-  baseURL,
-  headers: { "Content-Type": "application/json" },
-});
+// Tanpa Content-Type default: axios otomatis set application/json untuk objek,
+// dan multipart/form-data (+boundary) untuk FormData (upload evidence).
+export const api = axios.create({ baseURL });
 
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken;

@@ -29,15 +29,27 @@ export function useTaskRealtime() {
     const onTaskAssigned = () => {
       qc.invalidateQueries({ queryKey: ["tasks"] });
     };
+    const onWorkLog = () => {
+      qc.invalidateQueries({ queryKey: ["work-logs"] });
+    };
+    const onReview = () => {
+      qc.invalidateQueries({ queryKey: ["task-reviews"] });
+      qc.invalidateQueries({ queryKey: ["task"] });
+      qc.invalidateQueries({ queryKey: ["tasks"] });
+    };
 
     socket.on("task:updated", onTaskUpdated);
     socket.on("task:comment", onTaskComment);
     socket.on("task:assigned", onTaskAssigned);
+    socket.on("worklog:new", onWorkLog);
+    socket.on("review:created", onReview);
 
     return () => {
       socket.off("task:updated", onTaskUpdated);
       socket.off("task:comment", onTaskComment);
       socket.off("task:assigned", onTaskAssigned);
+      socket.off("worklog:new", onWorkLog);
+      socket.off("review:created", onReview);
     };
   }, [qc, token]);
 }

@@ -14,6 +14,11 @@ import { useTasks } from "@/hooks/use-tasks";
 import { useUnreadNotifications, useNotifications } from "@/hooks/use-notifications";
 import { StatCard } from "./stat-card";
 import { ActivityWidget } from "./activity-widget";
+import { SessionStatusCard } from "@/features/work-sessions/components/session-status-card";
+import { TeamActivityWidget } from "@/features/work-sessions/components/team-activity-widget";
+import { TeamKpiTable } from "@/features/kpi/components/team-kpi-table";
+import { TodayMeetingsWidget } from "@/features/meetings/components/today-meetings-widget";
+import { UpcomingEventsWidget } from "@/features/calendar/components/upcoming-events-widget";
 
 export function AdminDashboard() {
   const usersQ = useUsers({ limit: 100 });
@@ -29,7 +34,7 @@ export function AdminDashboard() {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="dash-stagger space-y-4">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         <StatCard
           label="Total Users"
@@ -62,6 +67,18 @@ export function AdminDashboard() {
           isLoading={unreadQ.isLoading}
         />
       </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <SessionStatusCard />
+        <TeamActivityWidget />
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <TodayMeetingsWidget />
+        <UpcomingEventsWidget />
+      </div>
+
+      <TeamKpiTable />
 
       <ActivityWidget
         notifications={activityQ.data?.data ?? []}

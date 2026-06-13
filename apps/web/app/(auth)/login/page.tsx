@@ -61,10 +61,10 @@ export default function LoginPage() {
         : null;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <Card className="w-full max-w-sm">
+    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+      <Card className="w-full max-w-sm shadow-lg">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex size-10 items-center justify-center rounded-lg bg-primary text-sm font-bold text-primary-foreground">
+          <div className="mx-auto mb-2 flex size-11 items-center justify-center rounded-xl bg-primary font-display text-base font-bold text-primary-foreground shadow-sm shadow-primary/30">
             A
           </div>
           <CardTitle className="text-lg">Masuk ke AWOS</CardTitle>

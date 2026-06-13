@@ -13,6 +13,10 @@ import { deriveTaskStats } from "@/features/dashboard/task-stats";
 import { StatCard } from "./stat-card";
 import { TaskListWidget } from "./task-list-widget";
 import { ActivityWidget } from "./activity-widget";
+import { SessionStatusCard } from "@/features/work-sessions/components/session-status-card";
+import { KpiCard } from "@/features/kpi/components/kpi-card";
+import { TodayMeetingsWidget } from "@/features/meetings/components/today-meetings-widget";
+import { UpcomingEventsWidget } from "@/features/calendar/components/upcoming-events-widget";
 
 export function EmployeeDashboard() {
   // Backend otomatis membatasi EMPLOYEE hanya ke task miliknya.
@@ -24,7 +28,9 @@ export function EmployeeDashboard() {
   const stats = useMemo(() => deriveTaskStats(tasks, Date.now()), [tasks]);
 
   return (
-    <div className="space-y-4">
+    <div className="dash-stagger space-y-4">
+      <SessionStatusCard />
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="My Tasks"
@@ -60,12 +66,19 @@ export function EmployeeDashboard() {
           isError={tasksQ.isError}
           emptyLabel="No tasks assigned to you"
         />
-        <ActivityWidget
-          notifications={activityQ.data?.data ?? []}
-          isLoading={activityQ.isLoading}
-          isError={activityQ.isError}
-        />
+        <KpiCard />
       </div>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <TodayMeetingsWidget />
+        <UpcomingEventsWidget />
+      </div>
+
+      <ActivityWidget
+        notifications={activityQ.data?.data ?? []}
+        isLoading={activityQ.isLoading}
+        isError={activityQ.isError}
+      />
     </div>
   );
 }
